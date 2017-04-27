@@ -47,17 +47,7 @@ end
 
 val disassemble : Infos.t ->  Program.t
 
-val run : configuration_file:string option -> unit -> unit
-(** Run disassembly with stubs from [configuration_file] *)
-
 val decode : string -> unit
 (** [decode s] decodes the string opcode [s].
     @assumes [s] is an hexadecimal string, i.e. of the form [0-9a-f]+
  *)
-
-val decode_llvm : string -> unit
-(** [decode s] decodes the string opcode [s].
-    @assumes [s] is an hexadecimal string, i.e. of the form [0-9a-f]+
- *)
-
-

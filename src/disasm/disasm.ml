@@ -91,16 +91,16 @@ module Program = struct
        Assuming the opcode is made of groups of 2 nibbles (1 byte),
        separated by 1 space, the max string length is computed to be:
        2 * 15 + 15 / 2  = 38
-       
+
        Adjust (upwards) the value whenever other assembly languages
        have higher requirements.
      *)
-   
+
     fprintf ppf "%a@ %-38s@ %a"
             Dba_types.Virtual_address.pp vaddr
             opcode_str
             Disasm_types.GenericInstruction.pp_mnemonic binstr
-    
+
   let pp ppf p =
     let open Dba_types.Virtual_address in
     pp_set_formatter_tag_functions ppf (ppf_tag_functions ppf);
@@ -117,51 +117,6 @@ module Program = struct
     pp_set_mark_tags ppf false;
     pp_set_print_tags ppf false
 
-
-  let count_program_instructions p =
-    let h = Hashtbl.create 107 in
-    let increase_count mnemonic =
-      match Hashtbl.find h mnemonic with
-      | n -> Hashtbl.replace h mnemonic (n + 1)
-      | exception Not_found -> Hashtbl.add h mnemonic 1
-    in
-    Dba_types.Virtual_address.Map.iter
-      (fun _ instr -> increase_count instr.Disasm_types.Instruction.mnemonic)
-      p.instructions;
-    h
-    
-  let pp_mnemonic_summary ppf p =
-    let tbl = count_program_instructions p in
-    let ordered =
-      Hashtbl.fold (fun mnemonic count l -> (mnemonic, count) :: l) tbl []
-      |> List.sort (fun (_, c1) (_, c2) -> Pervasives.compare c2 c1) (* decreasing order *)
-    in
-    fprintf ppf "@[<v 0>Different instruction count:%d@ %a@]"
-    (Hashtbl.length tbl)
-    (fun ppf l ->
-      List.iter
-        (fun (m, c) ->
-          (* FIXME: Would be nicer to use tabulation boxes below *)
-          let s = asprintf "%a" Disasm_types.Mnemonic.pp m in
-          fprintf ppf "@[<h>%-50s@ %d@]@ " s c; 
-    ) l) ordered
-
-    
-  let pp_dba ppf p =
-    let open Dba_types.Virtual_address in
-    fprintf
-      ppf "@[<v 0>%a@]"
-      (fun ppf p ->
-        Map.iter
-          (fun vaddr instr ->
-            fprintf ppf
-                    "@[<v 0>@[<h># -- %a@]@ %a@]@ @ "
-                    (pp_no_dba vaddr) instr
-                    Dba_types.Block.pp (instr.Disasm_types.Instruction.dba_block)
-          )
-          p.instructions
-      ) p
-    
 end
 
 
@@ -510,13 +465,13 @@ let disassemble_section ?(program=Program.empty) section_name =
       )
   program
   (Disasm_core.W.singleton sec_start)
-  
+
 
 let disassemble_sections () =
   assert (Disasm_options.Sections.is_set ());
   Disasm_options.DisassemblyMode.set_linear (); (* force linear mode *)
   let sections = Disasm_options.Sections.get () in
-  
+
   Basic_types.String.Set.fold
     (fun section_name program ->
       try disassemble_section ~program section_name
@@ -525,7 +480,7 @@ let disassemble_sections () =
         program
     ) sections Program.empty
 
-   
+
 let pp_mode ppf = function
   | Disasm_options.DisassemblyMode.Recursive ->
     Format.fprintf ppf "recursive"
@@ -540,8 +495,8 @@ let pp_mode ppf = function
 let disassemble parameters =
   let open Disasm_options in
   if Sections.is_set () then disassemble_sections ()
-  else 
-    
+  else
+
   let dba_file = DbaOutputFile.get ()
   and opcode_file =
     if OpcodeOutputFile.is_set () then OpcodeOutputFile.get () else "stdout" in
@@ -554,24 +509,6 @@ let disassemble parameters =
     | DisassemblyMode.Linear -> Linear.apply ~byte_wise:false
     | DisassemblyMode.Linear_byte_wise -> Linear.apply ~byte_wise:true
   in disassembler parameters
-
-
-let run ~configuration_file () =
-  let open Disasm_options in
-  let parameters = Binsec_utils.read_optional_config_file configuration_file in
-  let program = disassemble parameters in
-  (* let simplified_program =
-     on_instructions Simplification_dba.simplify_dba program in *)
-  if OpcodeOutputFile.is_set () then
-    Print_utils.pp_to_file ~filename:(OpcodeOutputFile.get ())
-                           Program.pp program 
-  else 
-    Logger.result "@[<v 0>Program@ %a@]" Program.pp program;
-  if ShowInstructionCount.get () then
-    Logger.result "@[%a@]" Program.pp_mnemonic_summary program;
-  Print_utils.pp_to_file
-    ~filename:(DbaOutputFile.get ())
-    Program.pp_dba program 
 
 
 (* Other functionalities *)
@@ -628,13 +565,3 @@ let decode raw =
   with X86toDba.InstructionUnhandled s ->
     Logger.warning "Not decoded %s" s;
     exit 1
-
-let decode_llvm raw =
-  try
-    let _opc, dba_block = Decode_utils.decode_hex_opcode raw in
-    Logger.result "%a" Llvm_decoder.pretty dba_block;
-    exit 0
-  with X86toDba.InstructionUnhandled s ->
-    Logger.warning "Not decoded %s" s;
-    exit 1
-

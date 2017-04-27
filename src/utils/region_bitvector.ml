@@ -789,7 +789,7 @@ and affine_to_smt_symb aff size =
 
 
 let symb_of_binary_expr op p1 p2 =
-  if Simulate_options.SemanticsMode.flat_or_not_basic () then
+  if Options.SemanticsMode.flat_or_not_basic () then
     begin
       match op with
       | SmtBvComp | SmtBvDiff | SmtBvUle | SmtBvUlt | SmtBvUge
@@ -805,7 +805,7 @@ let symb_of_binary_expr op p1 p2 =
 
 
 let symb_of_unary_expr op p =
-  if Simulate_options.SemanticsMode.flat_or_not_basic () then `Undef (size_of p)
+  if Options.SemanticsMode.flat_or_not_basic () then `Undef (size_of p)
   else `SymbSmt (SmtBvUnaryAlt(op, smt_symb_of p))
 
 
@@ -860,9 +860,9 @@ let normalize_symb s =
           aux2 new_a (acc, Bitvector.add acc_bv new_bv)
       ) aff (acc_aff, acc_cst)
   in
-  if Simulate_options.SemanticsMode.flat_or_basic_and_full ()
+  if Options.SemanticsMode.flat_or_basic_and_full ()
   then `Undef (size_of (`Symb s))
-  else if not (Simulate_options.SemanticsMode.basic ()) then `SymbSmt (symb_to_smt_symb s)
+  else if not (Options.SemanticsMode.basic ()) then `SymbSmt (symb_to_smt_symb s)
   else
     match s with
     | SymbVal (`Stack as rr, bv)
@@ -875,7 +875,7 @@ let normalize_symb s =
         | _ -> `Symb s
       end
     | Affine (a, bv) ->
-      if Simulate_options.SemanticsMode.basic_affine ()
+      if Options.SemanticsMode.basic_affine ()
       then
         let (a, bv) = (aux2 a (SymbMap.empty, bv)) in
         if SymbMap.cardinal a <= 1 then

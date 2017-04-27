@@ -19,7 +19,7 @@
 #                                                                        #
 ##########################################################################
 
-all : binsec pinsec
+all : binsec
 
 # The order of includes is important
 # Piqi.mk depends on values set from Config.mk
@@ -27,20 +27,9 @@ include Config.mk
 include Piqi.mk
 
 
-PINSEC_DIR = pinsec
-PINSEC_BUILD_DIR = $(PINSEC_DIR)/build
 CMAKE = cmake
 PIN_ROOT_DIR ?= pin-2.14-71313-gcc.4.4.7-linux
-pinsec: protoc
-	$(MKDIR) $(PINSEC_BUILD_DIR)
-	$(PP) "Using PIN from $(PIN_ROOT_DIR)"
-	($(CD) $(PINSEC_BUILD_DIR); \
-	$(CMAKE) -DPIN_ROOT_DIR=$(PIN_ROOT_DIR) ..)
-	$(PP) "Finish the build with cd $(PINSEC_BUILD_DIR); make"
 
-.PHONY: pinsec-clean pinsec
-pinsec-clean:
-	$(RRM) $(PINSEC_BUILD_DIR)
 
 
 BINSEC_DIR = src
@@ -50,7 +39,7 @@ binsec:
 binsec-clean:
 	$(MAKE) -C $(BINSEC_DIR) clean
 
-clean:: binsec-clean pinsec-clean
+clean:: binsec-clean
 
 clean-configure:
 	$(RRM) autom4te.cache config.status configure
@@ -63,5 +52,4 @@ tests:
 	$(MAKE) -C tests
 
 
-include $(PINSEC_DIR)/Targets.mk
 include $(BINSEC_DIR)/Targets.mk
