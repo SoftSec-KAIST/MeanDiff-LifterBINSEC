@@ -561,7 +561,7 @@ let decode raw =
   try
     let opc, dba_block = Decode_utils.decode_hex_opcode raw in
     Logger.result "%a" (custom_pp_dbainstrs opc) dba_block;
-    exit 0
+
   with X86toDba.InstructionUnhandled s ->
     Logger.warning "Not decoded %s" s;
-    exit 1
+
