@@ -1,3 +1,7 @@
+(* exceptions *)
+exception Unhandled_Instr of string
+
+
 (* translate single instruction *)
 let transInstr i =
   match i with
@@ -13,7 +17,7 @@ let transInstr i =
   | Dba.IkUndef (_, _) -> "TODO IkUndef"
   | Dba.IkMalloc (_, _, _) -> "TODO IkMalloc"
   | Dba.IkFree (_, _) -> "TODO IkFree"
-  | Dba.IkPrint (_, _) -> "TODO IkPrint"
+  | Dba.IkPrint (_, _) -> raise (Unhandled_Instr "IkPrint")
 
 let _ =
   (* comment out to hide debug output *)
