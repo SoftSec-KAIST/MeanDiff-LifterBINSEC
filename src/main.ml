@@ -1,4 +1,3 @@
-open Printf
 open Dba_types
 open Yojson.Basic.Util
 
@@ -198,4 +197,4 @@ let _ =
 
   (* print the list, line by line *)
   Logger.debug "\n==================================================================";
-  printf "%s\n" (Yojson.Basic.pretty_to_string json)
+  print_endline (Yojson.Basic.pretty_to_string json)
