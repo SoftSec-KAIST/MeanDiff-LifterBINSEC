@@ -21,6 +21,9 @@ let json_endian endian =
   | Dba.LittleEndian -> wrap "Endian" "LittleEndian" []
   | Dba.BigEndian -> wrap "Endian" "BigEndian" []
 
+let json_string s =
+  `String s
+
 let json_size size =
   `Int size (* TODO *)
   (* `Int (Basic_types.BitSize.to_int size) *)
@@ -66,17 +69,20 @@ let json_binop op =
   | Dba.GtS -> raise (Unhandled "GtS")
 
 let rec json_expr expr =
-  let wrap st args = wrap "Expr" st args in
+  let wrap_expr st args = wrap "Expr" st args in
 
   match expr with
-  | Dba.ExprVar (_, _, _) -> wrap "TODO ExprVar" []
-  | Dba.ExprLoad (s, endian, e) ->
-      wrap "Load" [json_expr e ; json_endian endian ; json_size s]
+  | Dba.ExprVar (name, size, _) ->
+      wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
 
-  | Dba.ExprCst (_, _) -> wrap "TODO ExprCst" []
+  | Dba.ExprLoad (size, endian, e) ->
+      wrap_expr "Load" [json_expr e ; json_endian endian ; json_size size]
+
+  | Dba.ExprCst (_, _) -> wrap_expr "TODO ExprCst" []
+
   | Dba.ExprUnary (op, e) -> begin
       let op_s, op_json = json_unop op in
-      wrap op_s [op_json ; json_expr e]
+      wrap_expr op_s [op_json ; json_expr e]
     end
 
   | Dba.ExprBinary (op, e1, e2) -> begin
@@ -88,14 +94,14 @@ let rec json_expr expr =
       | Dba.GeqS -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LtS e1 e2))
       | _ ->
           let op_s, op_json = json_binop op in
-          wrap op_s [op_json ; json_expr e1 ; json_expr e2]
+          wrap_expr op_s [op_json ; json_expr e1 ; json_expr e2]
     end
 
-  | Dba.ExprRestrict (_, _, _) -> wrap "TODO ExprRestrict" []
-  | Dba.ExprExtU (_, _) -> wrap "TODO ExprExtU" []
-  | Dba.ExprExtS (_, _) -> wrap "TODO ExprExtS" []
-  | Dba.ExprIte (_, _, _) -> wrap "TODO ExprIte" []
-  | Dba.ExprAlternative (_, _) -> wrap "TODO ExprAlternative" []
+  | Dba.ExprRestrict (_, _, _) -> wrap_expr "TODO ExprRestrict" []
+  | Dba.ExprExtU (_, _) -> wrap_expr "TODO ExprExtU" []
+  | Dba.ExprExtS (_, _) -> wrap_expr "TODO ExprExtS" []
+  | Dba.ExprIte (_, _, _) -> wrap_expr "TODO ExprIte" []
+  | Dba.ExprAlternative (_, _) -> wrap_expr "TODO ExprAlternative" []
 
 let json_compare compare =
   match compare with
