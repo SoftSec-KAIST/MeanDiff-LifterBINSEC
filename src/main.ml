@@ -21,6 +21,10 @@ let json_endian endian =
   | Dba.LittleEndian -> wrap "Endian" "LittleEndian" []
   | Dba.BigEndian -> wrap "Endian" "BigEndian" []
 
+let json_size size =
+  `Int size (* TODO *)
+  (* `Int (Basic_types.BitSize.to_int size) *)
+
 let json_unop op =
   let wrap t = "UnOp", (wrap "UnOpKind" t []) in
 
@@ -66,7 +70,9 @@ let rec json_expr expr =
 
   match expr with
   | Dba.ExprVar (_, _, _) -> wrap "TODO ExprVar" []
-  | Dba.ExprLoad (_, _, _) -> wrap "TODO ExprLoad" []
+  | Dba.ExprLoad (s, endian, e) ->
+      wrap "Load" [json_expr e ; json_endian endian ; json_size s]
+
   | Dba.ExprCst (_, _) -> wrap "TODO ExprCst" []
   | Dba.ExprUnary (op, e) -> begin
       let op_s, op_json = json_unop op in
