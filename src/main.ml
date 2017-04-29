@@ -21,11 +21,11 @@ let json_endian endian =
   | Dba.LittleEndian -> wrap "Endian" "LittleEndian" []
   | Dba.BigEndian -> wrap "Endian" "BigEndian" []
 
-let json_string s =
-  `String s
+let json_string s = `String s
 
-let json_size size =
-  `Int size (* TODO *)
+let json_int i = `Int i
+
+let json_size = json_int        (* TODO *)
   (* `Int (Basic_types.BitSize.to_int size) *)
 
 let json_unop op =
@@ -105,20 +105,39 @@ let rec json_expr expr =
   | Dba.ExprExtS (expr, size) ->
       wrap_expr "Cast" [(wrap "CastFrom" "SignExt" []) ; json_size size ; json_expr expr]
 
-  | Dba.ExprIte (_, _, _) -> wrap_expr "TODO ExprIte" []
+  | Dba.ExprIte (c, e1, e2) ->
+      wrap_expr "Ite" [json_cond c ; json_expr e1 ; json_expr e2]
+
   | Dba.ExprAlternative (_, _) -> wrap_expr "TODO ExprAlternative" []
 
-let json_compare compare =
-  match compare with
-  | Dba.FlgCmp (_, _) -> wrap "Compare" "TODO FlgCmp" []
-  | Dba.FlgSub (_, _) -> wrap "Compare" "TODO FlgSub" []
-  | Dba.FlgTest (_, _) -> wrap "Compare" "TODO FlgTest" []
-  | Dba.FlgUnspecified -> wrap "Compare" "TODO FlgUnspecified" []
+and json_cond cond =
+  match cond with
+  | Dba.CondReif (e) -> json_expr e
+  | Dba.CondNot (c) ->
+      let op_s, op_json = json_unop Dba.Not in
+      wrap "Expr" op_s [op_json ; json_cond c]
+  | Dba.CondAnd (c1, c2) ->
+      let op_s, op_json = json_binop Dba.And in
+      wrap "Expr" op_s [op_json ; json_cond c1 ; json_cond c2]
+  | Dba.CondOr (c1, c2) ->
+      let op_s, op_json = json_binop Dba.Or in
+      wrap "Expr" op_s [op_json ; json_cond c1 ; json_cond c2]
+  | Dba.True ->
+      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 1 ; json_size 1]] (* TODO *)
+  | Dba.False ->
+      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 0 ; json_size 1]] (* TODO *)
 
-let json_vartag vartag =
-  match vartag with
-  | Dba.Flag (_) -> wrap "Vartag" "TODO Flag" []
-  | Dba.Temp -> wrap "Vartag" "TODO Temp" []
+(* let json_compare compare = *)
+(*   match compare with *)
+(*   | Dba.FlgCmp (_, _) -> wrap "Compare" "TODO FlgCmp" [] *)
+(*   | Dba.FlgSub (_, _) -> wrap "Compare" "TODO FlgSub" [] *)
+(*   | Dba.FlgTest (_, _) -> wrap "Compare" "TODO FlgTest" [] *)
+(*   | Dba.FlgUnspecified -> wrap "Compare" "TODO FlgUnspecified" [] *)
+
+(* let json_vartag vartag = *)
+(*   match vartag with *)
+(*   | Dba.Flag (_) -> wrap "Vartag" "TODO Flag" [] *)
+(*   | Dba.Temp -> wrap "Vartag" "TODO Temp" [] *)
 
 let json_lhs lhs =
   match lhs with
