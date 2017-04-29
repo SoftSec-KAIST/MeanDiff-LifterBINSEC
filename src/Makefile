@@ -86,6 +86,7 @@ else
 PACKAGES=\
 	piqilib piqirun.ext \
 	ZMQ \
+	yojson \
 	zarith \
 	ocamlgraph \
 	llvm \

@@ -1,6 +1,7 @@
 true                                               : use_menhir, safe_string
 true                                               : annot, bin_annot, principal
 true                                               : package(ocamlgraph)
+true                                               : package(yojson)
 true                                               : package(zarith)
 true                                               : package(ZMQ)
 true                                               : package(graphics)
