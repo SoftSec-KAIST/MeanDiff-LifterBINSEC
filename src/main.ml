@@ -98,8 +98,13 @@ let rec json_expr expr =
     end
 
   | Dba.ExprRestrict (_, _, _) -> wrap_expr "TODO ExprRestrict" []
-  | Dba.ExprExtU (_, _) -> wrap_expr "TODO ExprExtU" []
-  | Dba.ExprExtS (_, _) -> wrap_expr "TODO ExprExtS" []
+
+  | Dba.ExprExtU (expr, size) ->
+      wrap_expr "Cast" [(wrap "CastFrom" "ZeroExt" []) ; json_size size ; json_expr expr]
+
+  | Dba.ExprExtS (expr, size) ->
+      wrap_expr "Cast" [(wrap "CastFrom" "SignExt" []) ; json_size size ; json_expr expr]
+
   | Dba.ExprIte (_, _, _) -> wrap_expr "TODO ExprIte" []
   | Dba.ExprAlternative (_, _) -> wrap_expr "TODO ExprAlternative" []
 
