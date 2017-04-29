@@ -140,26 +140,35 @@ and json_cond cond =
 
 let json_lhs lhs =
   match lhs with
-  | Dba.LhsVar (_, _, _) -> wrap "Lhs" "TODO LhrVar" []
-  | Dba.LhsVarRestrict (_, _, _, _) -> wrap "Lhs" "TODO LhsVarRestrict" []
-  | Dba.LhsStore (_, _, _) -> wrap "Lhs" "TODO LhrStore" []
+  | Dba.LhsVar (name, size, _) ->
+      wrap "Reg" "Variable" [json_string name ; json_size (size * 8)]
+  | Dba.LhsVarRestrict (name, size, _, _) -> (* TODO *)
+      wrap "Reg" "Variable" [json_string name ; json_size size]
+  | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
 
 let json_stmt s =
-  let wrap st args = wrap "Stmt" st args in
+  let wrap_stmt st args = wrap "Stmt" st args in
 
   match s with
-  | Dba.IkAssign (lhs, expr, _) -> wrap "Move" [json_lhs lhs ; json_expr expr]
-  | Dba.IkSJump (_, _) -> wrap "TODO IkSJump" []
-  | Dba.IkDJump (_, _) -> wrap "TODO IkDJump" []
-  | Dba.IkIf (_, _, _) -> wrap "TODO IkIf" []
-  | Dba.IkStop (_) -> wrap "TODO IkStop" []
-  | Dba.IkAssert (_, _) -> wrap "TODO IkAssert" []
-  | Dba.IkAssume (_, _) -> wrap "TODO IkAssume" []
-  | Dba.IkNondetAssume (_, _, _) -> wrap "TODO IkNondetAssume" []
-  | Dba.IkNondet (_, _, _) -> wrap "TODO IkNondet" []
-  | Dba.IkUndef (_, _) -> wrap "TODO IkUndef" []
-  | Dba.IkMalloc (_, _, _) -> wrap "TODO IkMalloc" []
-  | Dba.IkFree (_, _) -> wrap "TODO IkFree" []
+  | Dba.IkAssign (lhs, expr, _) -> begin
+      match lhs with
+      | Dba.LhsVar (_, _, _)
+      | Dba.LhsVarRestrict (_, _, _, _) ->
+        wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
+      | Dba.LhsStore (_, endian, e2) ->
+          wrap_stmt "Store" [json_expr e2 ; json_endian endian ; json_expr expr]
+  end
+  | Dba.IkSJump (_, _) -> wrap_stmt "TODO IkSJump" []
+  | Dba.IkDJump (_, _) -> wrap_stmt "TODO IkDJump" []
+  | Dba.IkIf (_, _, _) -> wrap_stmt "TODO IkIf" []
+  | Dba.IkStop (_) -> wrap_stmt "TODO IkStop" []
+  | Dba.IkAssert (_, _) -> wrap_stmt "TODO IkAssert" []
+  | Dba.IkAssume (_, _) -> wrap_stmt "TODO IkAssume" []
+  | Dba.IkNondetAssume (_, _, _) -> wrap_stmt "TODO IkNondetAssume" []
+  | Dba.IkNondet (_, _, _) -> wrap_stmt "TODO IkNondet" []
+  | Dba.IkUndef (_, _) -> wrap_stmt "TODO IkUndef" []
+  | Dba.IkMalloc (_, _, _) -> wrap_stmt "TODO IkMalloc" []
+  | Dba.IkFree (_, _) -> wrap_stmt "TODO IkFree" []
   | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
 
 let json_ast addr len dba =
