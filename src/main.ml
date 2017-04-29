@@ -1,9 +1,10 @@
 open Printf
+open Dba_types
 open Yojson.Basic.Util
 
 
 (* exceptions *)
-exception Unhandled_Instr of string
+exception Unhandled of string
 
 
 (* utils *)
@@ -15,18 +16,104 @@ let wrap t st args = `Assoc [
 
 
 (* translators *)
-let json_expr expr = wrap "Expr" "TODO" []
+let json_endian endian =
+  match endian with
+  | Dba.LittleEndian -> wrap "Endian" "LittleEndian" []
+  | Dba.BigEndian -> wrap "Endian" "BigEndian" []
+
+let json_unop op =
+  let wrap t = "UnOp", (wrap "UnOpKind" t []) in
+
+  match op with
+  | Dba.UMinus -> wrap "NEG"
+  | Dba.Not -> wrap "NOT"
+
+let json_binop op =
+  let wrap_bin t = "BinOp", (wrap "BinOpKind" t []) in
+  let wrap_rel t = "RelOp", (wrap "RelOpKind" t []) in
+
+  match op with
+  | Dba.Plus -> wrap_bin "ADD"
+  | Dba.Minus -> wrap_bin "SUB"
+  | Dba.MultU -> wrap_bin "MUL"
+  | Dba.MultS -> raise (Unhandled "MultS") (* TODO *)
+  | Dba.DivU -> wrap_bin "DIV"
+  | Dba.DivS -> wrap_bin "SDIV"
+  | Dba.ModU -> wrap_bin "MOD"
+  | Dba.ModS -> wrap_bin "SMOD"
+  | Dba.Or -> wrap_bin "OR"
+  | Dba.And -> wrap_bin "AND"
+  | Dba.Xor -> wrap_bin "XOR"
+  | Dba.Concat -> wrap_bin "CONCAT"
+  | Dba.LShift -> wrap_bin "SHL"
+  | Dba.RShiftU -> wrap_bin "SHR"
+  | Dba.RShiftS -> wrap_bin "SAR"
+  | Dba.LeftRotate -> raise (Unhandled "LeftRotate")
+  | Dba.RightRotate -> raise (Unhandled "RightRotate")
+  | Dba.Eq -> wrap_rel "EQ"
+  | Dba.Diff -> raise (Unhandled "Diff")
+  | Dba.LeqU -> wrap_rel "LE"
+  | Dba.LtU -> wrap_rel "LT"
+  | Dba.GeqU -> raise (Unhandled "GeqU")
+  | Dba.GtU -> raise (Unhandled "GtU")
+  | Dba.LeqS -> wrap_rel "SLE"
+  | Dba.LtS -> wrap_rel "SLT"
+  | Dba.GeqS -> raise (Unhandled "GeqS")
+  | Dba.GtS -> raise (Unhandled "GtS")
+
+let rec json_expr expr =
+  let wrap st args = wrap "Expr" st args in
+
+  match expr with
+  | Dba.ExprVar (_, _, _) -> wrap "TODO ExprVar" []
+  | Dba.ExprLoad (_, _, _) -> wrap "TODO ExprLoad" []
+  | Dba.ExprCst (_, _) -> wrap "TODO ExprCst" []
+  | Dba.ExprUnary (op, e) -> begin
+      let op_s, op_json = json_unop op in
+      wrap op_s [op_json ; json_expr e]
+    end
+
+  | Dba.ExprBinary (op, e1, e2) -> begin
+      match op with
+      | Dba.Diff -> json_expr (Expr.binary Dba.Minus e1 e2) (* TODO with if-then-else *)
+      | Dba.GtU -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LeqU e1 e2))
+      | Dba.GeqU -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LtU e1 e2))
+      | Dba.GtS -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LeqS e1 e2))
+      | Dba.GeqS -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LtS e1 e2))
+      | _ ->
+          let op_s, op_json = json_binop op in
+          wrap op_s [op_json ; json_expr e1 ; json_expr e2]
+    end
+
+  | Dba.ExprRestrict (_, _, _) -> wrap "TODO ExprRestrict" []
+  | Dba.ExprExtU (_, _) -> wrap "TODO ExprExtU" []
+  | Dba.ExprExtS (_, _) -> wrap "TODO ExprExtS" []
+  | Dba.ExprIte (_, _, _) -> wrap "TODO ExprIte" []
+  | Dba.ExprAlternative (_, _) -> wrap "TODO ExprAlternative" []
+
+let json_compare compare =
+  match compare with
+  | Dba.FlgCmp (_, _) -> wrap "Compare" "TODO FlgCmp" []
+  | Dba.FlgSub (_, _) -> wrap "Compare" "TODO FlgSub" []
+  | Dba.FlgTest (_, _) -> wrap "Compare" "TODO FlgTest" []
+  | Dba.FlgUnspecified -> wrap "Compare" "TODO FlgUnspecified" []
+
+let json_vartag vartag =
+  match vartag with
+  | Dba.Flag (_) -> wrap "Vartag" "TODO Flag" []
+  | Dba.Temp -> wrap "Vartag" "TODO Temp" []
+
+let json_lhs lhs =
+  match lhs with
+  | Dba.LhsVar (_, _, _) -> wrap "Lhs" "TODO LhrVar" []
+  | Dba.LhsVarRestrict (_, _, _, _) -> wrap "Lhs" "TODO LhsVarRestrict" []
+  | Dba.LhsStore (_, _, _) -> wrap "Lhs" "TODO LhrStore" []
 
 let json_stmt s =
-  let wrap st args =
-    `Assoc [
-      ("Type", `String "Stmt") ;
-      ("SubType", `String st) ;
-      ("Args", `List args)
-    ] in
+  let wrap st args = wrap "Stmt" st args in
 
   match s with
-  | Dba.IkAssign (lhs, expr, _) -> wrap "Move" [json_expr lhs ; json_expr expr]
+  | Dba.IkAssign (lhs, expr, _) -> wrap "Move" [json_lhs lhs ; json_expr expr]
   | Dba.IkSJump (_, _) -> wrap "TODO IkSJump" []
   | Dba.IkDJump (_, _) -> wrap "TODO IkDJump" []
   | Dba.IkIf (_, _, _) -> wrap "TODO IkIf" []
@@ -38,7 +125,7 @@ let json_stmt s =
   | Dba.IkUndef (_, _) -> wrap "TODO IkUndef" []
   | Dba.IkMalloc (_, _, _) -> wrap "TODO IkMalloc" []
   | Dba.IkFree (_, _) -> wrap "TODO IkFree" []
-  | Dba.IkPrint (_, _) -> raise (Unhandled_Instr "IkPrint")
+  | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
 
 let json_ast addr len dba =
   let imm = wrap "Imm" "Integer" [`Int (addr + len) ; `Int 32] in
