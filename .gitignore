@@ -5,3 +5,6 @@ config.*
 src/binsec
 .merlin
 src/main.native
+._bcdi
+*.cmi
+*.cmo
