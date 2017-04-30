@@ -100,7 +100,17 @@ let rec json_expr expr =
           wrap_expr op_s [op_json ; json_expr e1 ; json_expr e2]
     end
 
-  | Dba.ExprRestrict (_, _, _) -> wrap_expr "TODO ExprRestrict" []
+  | Dba.ExprRestrict (expr, lo, hi) ->
+      let c' = wrap_expr "Cast" [
+        (wrap "CastFrom" "Low" []) ;
+        json_int (hi + 1) ;
+        json_expr expr
+      ] in
+      wrap_expr "Cast" [
+        (wrap "CastFrom" "High" []) ;
+        json_int (hi - lo + 1) ;
+        c'
+      ]
 
   | Dba.ExprExtU (expr, size) ->
       wrap_expr "Cast" [(wrap "CastFrom" "ZeroExt" []) ; json_size size ; json_expr expr]
@@ -111,7 +121,15 @@ let rec json_expr expr =
   | Dba.ExprIte (c, e1, e2) ->
       wrap_expr "Ite" [json_cond c ; json_expr e1 ; json_expr e2]
 
-  | Dba.ExprAlternative (_, _) -> wrap_expr "TODO ExprAlternative" []
+  | Dba.ExprAlternative (exprs, _) -> (* TODO handle AddCarry and AddZero *)
+    let op_s, op_json = json_binop Dba.Concat in
+    let rec fold exprs =
+      match exprs with
+      | [] -> raise (Unhandled "empty ExprAlternative")
+      | [e] -> json_expr e
+      | e :: es -> wrap_expr op_s ([op_json ; json_expr e] @ [fold es])
+    in
+    fold exprs
 
 and json_cond cond =
   match cond with
@@ -217,6 +235,15 @@ let _ =
   (* variables *)
   let addr = 0x8048000 in
   let len = (Dba_types.Block.length dba) * 32 in
+
+  (* debug *)
+  (* let foo = Dba.ExprAlternative ([ *)
+  (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) ; *)
+  (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) ; *)
+  (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) *)
+  (*   ], None) in *)
+  (* let foo = Dba.ExprAlternative ([(Dba.ExprVar ("foo", 1, None))], None) in *)
+  (* let json = json_expr foo in *)
 
   (* translate into json *)
   let json = json_ast addr len dba in
