@@ -1,5 +1,12 @@
-* BINCOA Translator
-Translate BINCOA to Soomin IR
+* BINCOA Translator                                                :TOC_4_hg:
+ - [[#installation-of-binsec][Installation of BINSEC]]
+   - [[#1-system-dependencies][1. System dependencies]]
+   - [[#2-ocaml-libraries][2. Ocaml libraries]]
+   - [[#3-install-binsec][3. Install BINSEC]]
+ - [[#usage-of-binsec][Usage of BINSEC]]
+ - [[#installation-of-bincoa-trans][Installation of `bincoa-trans`]]
+ - [[#usage-of-bincoa-trans][Usage of `bincoa-trans`]]
+ - [[#references][References]]
 
 ** Installation of BINSEC
    A write-up of my installation process of BINSEC
@@ -8,16 +15,16 @@ Translate BINCOA to Soomin IR
     1. Install system dependencies
     2. Install Ocaml libraries
     3. Install BINSEC
-
+ 
 *** 1. System dependencies
     On my Arch Linux box I had to install the following system packages:
     - `ocaml` - OCaml compiler
     - `camlp4` - Caml preprocessor and pretty-printer
     - `opam` - OCaml Package Manager
-
+ 
 *** 2. Ocaml libraries
     First initialize `~/.opam` with `opam init`.
-
+ 
     And following packages, with `opam install`:
      - `piqi`
      - `piqilib`
@@ -26,22 +33,27 @@ Translate BINCOA to Soomin IR
      - `zarith`
      - `zmq`
      - `llvm`
-
+ 
 *** 3. Install BINSEC
     1. Download and extract [binsec-0.1](http://binsec.gforge.inria.fr/distrib/binsec-0.1-20170301.tgz)
     2. Build
-
+ 
            # ./configure
            # make binsec
            
     3. Install (root permissions)
     
            $ cd src; make install
-
+ 
 ** Usage of BINSEC
    See `binsec disasm -help` or `binsec-0.1-*/README` for examples.
-
-
+ 
+** Installation of `bincoa-trans`
+   TODO
+ 
+** Usage of `bincoa-trans`
+   TODO
+ 
 ** References
    - [BINCOA Project](http://bincoa.labri.fr/)
    - [BINSEC](http://binsec.gforge.inria.fr/tools)
