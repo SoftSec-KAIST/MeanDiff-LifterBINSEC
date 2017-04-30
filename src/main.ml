@@ -1,3 +1,4 @@
+open Dba
 open Dba_types
 open Yojson.Basic.Util
 
@@ -26,6 +27,10 @@ let json_int i = `Int i
 
 let json_size = json_int        (* TODO *)
   (* `Int (Basic_types.BitSize.to_int size) *)
+
+let json_addr a =
+  `Int (Bigint.int_of_big_int (Bitvector.value_of a.base)), (* TODO big to int *)
+  json_size (Bitvector.size_of a.base)
 
 let json_unop op =
   let wrap t = "UnOp", (wrap "UnOpKind" t []) in
@@ -154,12 +159,25 @@ let json_stmt s =
       match lhs with
       | Dba.LhsVar (_, _, _)
       | Dba.LhsVarRestrict (_, _, _, _) ->
-        wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
+          wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
       | Dba.LhsStore (_, endian, e2) ->
           wrap_stmt "Store" [json_expr e2 ; json_endian endian ; json_expr expr]
-  end
-  | Dba.IkSJump (_, _) -> wrap_stmt "TODO IkSJump" []
-  | Dba.IkDJump (_, _) -> wrap_stmt "TODO IkDJump" []
+    end
+
+  | Dba.IkSJump (target, _) -> begin
+      let num = match target with
+        | Dba.JInner (id) ->
+            wrap "Imm" "Integer" [json_int id ; json_int 8] (* TODO *)
+        | Dba.JOuter (addr) ->
+            let i_json, s_json = json_addr addr in
+            wrap "Imm" "Integer" [i_json ; s_json] (* TODO *)
+      in
+      wrap_stmt "End" [wrap "Expr" "Num" [num]]
+    end
+
+  | Dba.IkDJump (expr, _) ->
+      wrap_stmt "End" [json_expr expr]
+
   | Dba.IkIf (_, _, _) -> wrap_stmt "TODO IkIf" []
   | Dba.IkStop (_) -> wrap_stmt "TODO IkStop" []
   | Dba.IkAssert (_, _) -> wrap_stmt "TODO IkAssert" []
