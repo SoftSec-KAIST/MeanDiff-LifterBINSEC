@@ -178,41 +178,6 @@ BINSEC_LICENSE_CEA += $(DISASM_FILES)
 
 
 ##
-# LLVM
-##
-LLVM_DIR = llvm
-LLVM_SRC_FILES = \
-	transfer_functions \
-	generic_decoder_sig \
-	generic_decoder llvm_decoder 
-LLVM_INT_FILES = $(LLVM_SRC_FILES)
-LLVM_ML_FILES = $(LLVM_SRC_FILES:%=$(LLVM_DIR)/%.ml)
-LLVM_MLI_FILES = $(LLVM_INT_FILES:%=$(LLVM_DIR)/%.mli)
-LLVM_FILES = \
-	$(LLVM_ML_FILES) \
-	$(LLVM_MLI_FILES)
-
-BINSEC_LICENSE_CEA += $(LLVM_FILES)
-BINSEC_DISTRIB_FILES += $(LLVM_FILES)
-
-##
-# Formula
-##
-FORMULA_DIR = formula
-FORMULA_SRC_FILES = qed formula_type formula_optim formula formula_utils
-FORMULA_INT_FILES = $(FORMULA_SRC_FILES)
-FORMULA_ML_FILES = $(FORMULA_SRC_FILES:%=$(FORMULA_DIR)/%.ml)
-FORMULA_MLI_FILES = \
-	$(FORMULA_INT_FILES:%=$(FORMULA_DIR)/%.mli)
-FORMULA_FILES = \
-	$(FORMULA_MLI_FILES) \
-	$(FORMULA_ML_FILES)
-
-BINSEC_DISTRIB_FILES += $(FORMULA_FILES)
-BINSEC_LICENSE_CEA += $(FORMULA_FILES)
-
-
-##
 # SMT
 ##
 
@@ -255,242 +220,6 @@ SMT_FILES = \
 BINSEC_DISTRIB_FILES += $(SMT_FILES)
 BINSEC_LICENSE_CEA += $(SMT_FILES)
 
-##
-# Ast
-##
-AST_DIR = ast
-AST_SRC_FILES = cfgraph ast_builder
-AST_ML_FILES = $(AST_DIR)/cfg.ml $(AST_SRC_FILES:%=$(AST_DIR)/%.ml)
-AST_MLI_FILES = \
-	$(AST_ML_FILES:%.ml=%.mli) \
-	$(AST_INT_FILES:%=$(AST_DIR)/%.mli)
-AST_FILES = $(AST_ML_FILES) $(AST_MLI_FILES)
-
-BINSEC_DISTRIB_FILES += $(AST_FILES)
-BINSEC_LICENSE_CEA += $(AST_FILES)
-
-
-##
-# Static common
-##
-STATIC_DIR = static
-OPTION_FILES += $(STATIC_DIR)/static_options
-STATIC_SRC_FILES = static_types static_utils
-STATIC_INT_FILES = $(STATIC_SRC_FILES)
-STATIC_ML_FILES = $(STATIC_SRC_FILES:%=$(STATIC_DIR)/%.ml)
-STATIC_MLI_FILES = $(STATIC_INT_FILES:%=$(STATIC_DIR)/%.mli)
-STATIC_FILES = \
-	$(STATIC_ML_FILES)\
-	$(STATIC_MLI_FILES)
-
-BINSEC_DISTRIB_FILES += $(STATIC_FILES)
-BINSEC_LICENSE_CEA += $(STATIC_FILES)
-
-
-##
-# Simulation
-#
-SIMULATION_DIR = $(STATIC_DIR)/simulation
-OPTION_FILES += $(SIMULATION_DIR)/simulate_options
-SIMULATION_SRC_FILES = \
-	simulate_utils \
-	concrete_state concrete_eval \
-	simulate
-SIMULATION_ML_FILES = $(SIMULATION_SRC_FILES:%=$(SIMULATION_DIR)/%.ml)
-SIMULATION_MLI_FILES = \
-	$(SIMULATION_ML_FILES:%.ml=%.mli) \
-	$(SIMULATION_INT_FILES:%=$(SIMULATION_DIR)/%.mli)
-
-SIMULATION_FILES = \
-	$(SIMULATION_ML_FILES) \
-	$(SIMULATION_MLI_FILES)
-
-BINSEC_DISTRIB_FILES += $(SIMULATION_FILES)
-BINSEC_LICENSE_CEA += $(SIMULATION_FILES)
-
-
-##
-# Abstract interpretation
-##
-AI_DIR = $(STATIC_DIR)/ai
-OPTION_FILES += $(AI_DIR)/ai_options
-AI_BASE_SRC_FILES =  normalize_instructions
-AI_BASE_ML_FILES = $(AI_BASE_SRC_FILES:%=$(AI_DIR)/%.ml)
-AI_BASE_MLI_FILES = $(AI_BASE_SRC_FILES:%=$(AI_DIR)/%.mli)
-AI_SRC_FILES = \
-	display ai_utils \
-	backward_analysis \
-	normalize_predicate high_level_predicate \
-	reduced_product nonrelational \
-	ai_results \
-	ai
-AI_INT_FILES = ai_sigs $(AI_SRC_FILES)
-AI_ML_FILES = $(AI_SRC_FILES:%=$(AI_DIR)/%.ml)
-AI_MLI_FILES = $(AI_INT_FILES:%=$(AI_DIR)/%.mli)
-
-AI_DOMAINS_DIR = $(AI_DIR)/domains
-AI_DOMAINS_SRC_FILES = domain_common \
-	interval range kset union_find taint
-AI_DOMAINS_INT_FILES = $(AI_DOMAINS_SRC_FILES)
-AI_DOMAINS_ML_FILES = $(AI_DOMAINS_SRC_FILES:%=$(AI_DOMAINS_DIR)/%.ml)
-AI_DOMAINS_MLI_FILES = $(AI_DOMAINS_INT_FILES:%=$(AI_DOMAINS_DIR)/%.mli)
-
-ALL_AI_ML_FILES = \
-	$(AI_BASE_ML_FILES) \
-	$(AI_DOMAINS_ML_FILES) \
-	$(AI_ML_FILES)
-ALL_AI_MLI_FILES = \
-	$(AI_MLI_FILES) $(AI_BASE_MLI_FILES) $(AI_DOMAINS_MLI_FILES)
-
-AI_FILES = \
-	$(ALL_AI_ML_FILES) \
-	$(ALL_AI_MLI_FILES)
-
-BINSEC_DISTRIB_FILES += $(AI_FILES)
-BINSEC_LICENSE_CEA += $(AI_FILES)
-
-
-DYNAMIC_DIR = dynamic
-
-##
-# TRACE
-##
-DTRACE_DIR = $(DYNAMIC_DIR)/trace
-DTRACE_BASE_SRC_FILES = trace_type
-DTRACE_BASE_ML_FILES = $(DTRACE_BASE_SRC_FILES:%=$(DTRACE_DIR)/%.ml)
-DTRACE_BASE_MLI_FILES = $(DTRACE_BASE_SRC_FILES:%=$(DTRACE_DIR)/%.mli)
-DTRACE_SRC_FILES = trace_postprocessing trace_loader # trace_visitor
-DTRACE_INT_FILES = $(DTRACE_SRC_FILES)
-DTRACE_ML_FILES = $(DTRACE_SRC_FILES:%=$(DTRACE_DIR)/%.ml)
-DTRACE_MLI_FILES = $(DTRACE_INT_FILES:%=$(DTRACE_DIR)/%.mli)
-
-DDSE_DIR = $(DYNAMIC_DIR)/dse
-DDSE_SRC_FILES = path_pred_env policy_engine path_predicate
-DDSE_INT_FILES = policy_type $(DDSE_SRC_FILES)
-DDSE_ML_FILES = $(DDSE_SRC_FILES:%=$(DDSE_DIR)/%.ml)
-DDSE_MLI_FILES = \
-	$(DDSE_INT_FILES:%=$(DDSE_DIR)/%.mli)
-
-
-DTAINT_DIR = $(DDSE_DIR)/tainting
-DTAINT_SRC_FILES = taint_types tainting
-DTAINT_INT_FILES = $(DTAINT_SRC_FILES)
-DTAINT_ML_FILES = $(DTAINT_SRC_FILES:%=$(DTAINT_DIR)/%.ml)
-DTAINT_MLI_FILES = $(DTAINT_INT_FILES:%=$(DTAINT_DIR)/%.mli)
-
-
-DDSE_SYSCALL_DIR  = $(DDSE_DIR)/syscall_stubs
-DDSE_SYSCALL_SRC_FILES = syscall_stubs
-DDSE_SYSCALL_INT_FILES = $(DDSE_SYSCALL_SRC_FILES)
-DDSE_SYSCALL_ML_FILES = $(DDSE_SYSCALL_SRC_FILES:%=$(DDSE_SYSCALL_DIR)/%.ml)
-DDSE_SYSCALL_MLI_FILES = $(DDSE_SYSCALL_INT_FILES:%=$(DDSE_SYSCALL_DIR)/%.mli)
-
-DDSE_ISTUBS_DIR  = $(DDSE_DIR)/instruction_stubs
-DDSE_ISTUBS_SRC_FILES = instruction_stubs
-DDSE_ISTUBS_INT_FILES = $(DDSE_ISTUBS_SRC_FILES)
-DDSE_ISTUBS_ML_FILES = $(DDSE_ISTUBS_SRC_FILES:%=$(DDSE_ISTUBS_DIR)/%.ml)
-DDSE_ISTUBS_MLI_FILES = $(DDSE_ISTUBS_INT_FILES:%=$(DDSE_ISTUBS_DIR)/%.mli)
-
-DDSE_LIBCALL_DIR = $(DDSE_DIR)/libcall_stubs
-DDSE_LIBCALL_SRC_FILES_CEA_IMAG = \
-	libc_stubs libcall_stubs
-DDSE_LIBCALL_SRC_FILES_CEA = \
-	libcall_utils \
-	windows_stubs \
-	call_convention
-DDSE_LIBCALL_SRC_FILES = \
-	$(DDSE_LIBCALL_SRC_FILES_CEA) \
-	$(DDSE_LIBCALL_SRC_FILES_CEA_IMAG)
-DDSE_LIBCALL_INT_FILES = libcall_types
-DDSE_LIBCALL_ML_FILES = $(DDSE_LIBCALL_SRC_FILES:%=$(DDSE_LIBCALL_DIR)/%.ml)
-DDSE_LIBCALL_MLI_FILES = \
-	$(DDSE_LIBCALL_INT_FILES:%=$(DDSE_LIBCALL_DIR)/%.mli) \
-	$(DDSE_LIBCALL_ML_FILES:%.ml=%.mli)
-
-DDSE_EXAMPLES_DIR = $(DDSE_DIR)/examples
-DDSE_EXAMPLES_SRC_FILES = \
-	call_ret generic_analyse opaque_predicate 
-
-DDSE_EXAMPLES_INT_FILES = $(DDSE_EXAMPLES_SRC_FILES)
-DDSE_EXAMPLES_ML_FILES = \
-	$(DDSE_EXAMPLES_SRC_FILES:%=$(DDSE_EXAMPLES_DIR)/%.ml)
-
-DDSE_EXAMPLES_MLI_FILES = \
-	$(DDSE_EXAMPLES_INT_FILES:%=$(DDSE_EXAMPLES_DIR)/%.mli)
-
-
-
-DPATH_DIR = $(DDSE_DIR)/path_exploration
-DPATH_BASE_SRC_FILES = fdInput
-DPATH_BASE_ML_FILES = $(DPATH_BASE_SRC_FILES:%=$(DPATH_DIR)/%.ml)
-DPATH_BASE_MLI_FILES = $(DPATH_BASE_SRC_FILES:%=$(DPATH_DIR)/%.mli)
-DPATH_SRC_FILES = \
-	dseException \
-	tracesToTree exploration_type\
-	conf_exploration historyAsTree \
-	symbolicInput \
-	inputFromFiles initMemInput \
-	invertChild check_trace traceAsFile \
-	eipRewrite guideAsRandom uaf_detection \
-	Parsing_gueb \
-	criteriaAsDefault criteriaEIPRewrite criteriaAsUAF \
-	guideAsBFS guideAsDFS \
-	guideAsUAF guideAsStrcmp\
-	dse
-DPATH_INT_FILES = \
-	dseException \
-	typeCriteriaDSE typeGuideDSE typeHistoryDSE typeTraceDSE \
-	guideAsPriority guideAsUAF guideAsShortestPath \
-	criteriaUAF \
-	tracesToTree uaf_detection conf_exploration \
-	historyAsTree \
-	guideAsRandom \
-	guideAsBFS guideAsDFS \
-	criteriaAsDefault \
-	criteriaEIPRewrite \
-	traceAsFile
-DPATH_ML_FILES = $(DPATH_SRC_FILES:%=$(DPATH_DIR)/%.ml)
-DPATH_MLI_FILES = $(DPATH_INT_FILES:%=$(DPATH_DIR)/%.mli)
-
-DPATH_FILES = \
-	$(DPATH_ML_FILES)  $(DPATH_MLI_FILES) \
-	$(DPATH_BASE_ML_FILES)  $(DPATH_BASE_MLI_FILES)
-
-DYNAMIC_ML_FILES = \
-	$(DTRACE_BASE_ML_FILES) \
-	$(DPATH_BASE_ML_FILES) \
-	$(DDSE_LIBCALL_ML_FILES) \
-	$(DDSE_SYSCALL_ML_FILES) \
-	$(DDSE_ISTUBS_ML_FILES) \
-	$(DTRACE_ML_FILES) \
-	$(DTAINT_ML_FILES) \
-	$(DDSE_ML_FILES) \
-	$(DPATH_ML_FILES) \
-	$(DDSE_EXAMPLES_ML_FILES)
-
-DYNAMIC_MLI_FILES = \
-	$(DTRACE_BASE_MLI_FILES) \
-	$(DTAINT_MLI_FILES) \
-	$(DTRACE_MLI_FILES) \
-	$(DDSE_LIBCALL_MLI_FILES) \
-	$(DDSE_SYSCALL_MLI_FILES) \
-	$(DDSE_ISTUBS_MLI_FILES) \
-	$(DDSE_MLI_FILES) \
-	$(DPATH_BASE_MLI_FILES) \
-	$(DPATH_MLI_FILES) \
-	$(DDSE_EXAMPLES_MLI_FILES)
-
-DYNAMIC_DIRS = \
-	$(DDSE_EXAMPLES_DIR) \
-	$(DDSE_LIBCALL_DIR) \
-	$(DDSE_SYSCALL_DIR) \
-	$(DDSE_ISTUBS_DIR) \
-	$(DTRACE_DIR) \
-	$(DDSE_DIR) \
-	$(DTAINT_DIR) \
-	$(DPATH_DIR)
-
-BINSEC_DISTRIB_FILES += $(DYNAMIC_ML_FILES) $(DYNAMIC_MLI_FILES)
 
 # Licenses
 BINSEC_LICENSE_CEA += \
@@ -523,17 +252,6 @@ BINSEC_LICENSE_IMAG += $(DPATH_FILES)
 
 # Unused files: typeHeuristiDSE guideasDFSUAF invertSAT exploit_analyse
 
-
-# Server
-
-SERVER_DIR = server
-SERVER_SRC_FILES = dba_io server_callback server
-SERVER_ML_FILES = $(SERVER_SRC_FILES:%=$(SERVER_DIR)/%.ml)
-SERVER_MLI_FILES = $(SERVER_SRC_FILES:%=$(SERVER_DIR)/%.mli)
-SERVER_FILES = $(SERVER_MLI_FILES) $(SERVER_ML_FILES)
-
-BINSEC_DISTRIB_FILES += $(SERVER_FILES)
-BINSEC_LICENSE_CEA += $(SERVER_FILES)
 
 ##
 # Parsers
@@ -568,47 +286,8 @@ BINSEC_DISTRIB_FILES += $(PARSER_FILES)
 BINSEC_LICENSE_CEA += $(PARSER_FILES)
 
 
-##
-# Examples
-##
-
-EXAMPLE_DIR = examples
-
-EXAMPLE_SRC_FILES = flareon sploit1 \
-	stat_analysis switch branch_coverage \
-	summary_analysis
-EXAMPLE_INT_FILES = $(EXAMPLE_SRC_FILES)
-EXAMPLE_ML_FILES = $(EXAMPLE_SRC_FILES:%=$(EXAMPLE_DIR)/%.ml)
-EXAMPLE_MLI_FILES = $(EXAMPLE_INT_FILES:%=$(EXAMPLE_DIR)/%.mli)
-EXAMPLE_FILES = $(EXAMPLE_ML_FILES) $(EXAMPLE_MLI_FILES)
-
-BINSEC_DISTRIB_FILES += $(EXAMPLE_FILES)
-BINSEC_LICENSE_CEA += $(EXAMPLE_FILES)
-
-##
-# Protobuf
-##
-PROTO_DIR = proto
-PROTO_SRC_FILES = \
-	common instruction libcall syscall \
-	dba trace analysis_config config message
-PROTO_FILES = $(PROTO_SRC_FILES:%=$(PROTO_DIR)/%.proto)
-
-BINSEC_DISTRIB_FILES += $(PROTO_FILES)
-BINSEC_LICENSE_CEA += $(PROTO_FILES)
 
 # License ?
-
-
-PIQI_DIR = piqi
-PIQI_SRC_FILES = $(PROTO_SRC_FILES)
-PIQI_FILES = $(PIQI_SRC_FILES:%=$(PIQI_DIR)/%.piqi)
-PIQI_ML_FILES = \
-	$(PIQI_SRC_FILES:%=$(PIQI_DIR)/%_piqi.ml) \
-	$(PIQI_SRC_FILES:%=$(PIQI_DIR)/%_piqi_ext.ml)
-GENERATED_FILES += \
-	$(PIQI_FILES) \
-	$(PIQI_ML_FILES)
 
 
 BINPATCHER_DIR = binpatcher
@@ -654,7 +333,6 @@ BINSEC_DISTRIB_FILES += $(OPTION_ML_FILES) $(OPTION_MLI_FILES)
 ML_FILES = \
 	$(UTILS_BASE_ML_FILES) \
 	$(DBA_ML_FILES) \
-	$(PIQI_ML_FILES) \
 	config.ml \
 	$(OPTION_ML_FILES) \
 	$(LOADER_ML_FILES) \
@@ -669,14 +347,6 @@ ML_FILES = \
 	$(SIMP_ML_FILES) \
 	$(LLVM_ML_FILES) \
 	$(DISASM_ML_FILES) \
-	$(STATIC_ML_FILES) \
-	$(FORMULA_ML_FILES) \
-	$(SIMULATION_ML_FILES) \
-	$(ALL_AI_ML_FILES) \
-	$(DYNAMIC_ML_FILES) \
-	$(SERVER_ML_FILES) \
-	$(EXAMPLE_ML_FILES) \
-	$(BINPATCHER_ML_FILES) \
 	$(MAIN_ML_FILES)
 
 

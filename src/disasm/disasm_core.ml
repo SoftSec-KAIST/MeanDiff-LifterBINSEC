@@ -62,8 +62,8 @@ let x86_decode (addr:Dba_types.Virtual_address.t) =
   | X86decoder.Parse s -> raise (Decode_error s)
 
 
-let arm_decode (addr:Dba_types.Virtual_address.t) =
-  generic_decode ArmToDba.decode (fun x -> x) addr
+(* let arm_decode (addr:Dba_types.Virtual_address.t) = *)
+(*   generic_decode ArmToDba.decode (fun x -> x) addr *)
 
 (* End wrappers *)
 
@@ -83,7 +83,7 @@ let decoder_of_machine () =
   let open Machine in
   match ISA.get () with
   | X86 -> x86_decode
-  | ARM -> arm_decode
+  (* | ARM -> arm_decode *)
   | isa ->
     let msg = Format.asprintf "missing ISA %a" ISA.pp isa in
     Errors.not_yet_implemented msg

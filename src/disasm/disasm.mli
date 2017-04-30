@@ -32,21 +32,6 @@ module Program : sig
   val pp : Format.formatter -> t -> unit
 end
 
-
-
-module Recursive : sig
-  val disassemble:
-    ?jumps:Dba_types.Caddress.Set.elt list Dba_types.Caddress.Map.t ->
-    ?stops:Dba_types.Caddress.Set.t ->
-    ?visited:Dba_types.Virtual_address.Set.t ->
-    ?worklist:Disasm_core.W.t ->
-    Program.t ->
-    Program.t
-end
-
-
-val disassemble : Infos.t ->  Program.t
-
 val decode : string -> unit
 (** [decode s] decodes the string opcode [s].
     @assumes [s] is an hexadecimal string, i.e. of the form [0-9a-f]+
