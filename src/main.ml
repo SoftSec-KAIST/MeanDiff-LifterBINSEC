@@ -213,7 +213,8 @@ let json_stmt (num, idx, res) s =
       let jmp = wrap_stmt "End" [json_target target] in
       (num, idx, lab2 :: jmp :: lab1 :: swt :: res)
 
-  | Dba.IkStop (_) -> (num, idx, (wrap_stmt "TODO IkStop" []) :: res)
+  | Dba.IkStop (_) ->
+      (num, idx, (wrap_stmt "End" [num]) :: res)
 
   | Dba.IkAssert (_, _) -> raise (Unhandled "IkAssert")
   | Dba.IkAssume (_, _) -> raise (Unhandled "IkAssume")
