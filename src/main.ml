@@ -168,6 +168,16 @@ let json_lhs lhs =
       wrap "Reg" "Variable" [json_string name ; json_size size]
   | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
 
+let json_target target =
+  let num = match target with
+    | Dba.JInner (id) ->
+      wrap "Imm" "Integer" [json_int id ; json_int 8] (* TODO *)
+    | Dba.JOuter (addr) ->
+      let i_json, s_json = json_addr addr in
+      wrap "Imm" "Integer" [i_json ; s_json] (* TODO *)
+  in
+  wrap "Expr" "Num" [num]
+
 let json_stmt (num, idx, res) s =
   let wrap_stmt st args = wrap "Stmt" st args in
 
@@ -183,17 +193,10 @@ let json_stmt (num, idx, res) s =
       (num, idx, j :: res)
     end
 
-  | Dba.IkSJump (target, _) -> begin
-      let num = match target with
-        | Dba.JInner (id) ->
-            wrap "Imm" "Integer" [json_int id ; json_int 8] (* TODO *)
-        | Dba.JOuter (addr) ->
-            let i_json, s_json = json_addr addr in
-            wrap "Imm" "Integer" [i_json ; s_json] (* TODO *)
-      in
-      let j = wrap_stmt "End" [wrap "Expr" "Num" [num]] in
+  | Dba.IkSJump (target, _) ->
+      let e = json_target target in
+      let j = wrap_stmt "End" [e] in
       (num, idx, j :: res)
-    end
 
   | Dba.IkDJump (expr, _) ->
       let j = wrap_stmt "End" [json_expr expr] in
