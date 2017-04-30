@@ -168,17 +168,19 @@ let json_lhs lhs =
       wrap "Reg" "Variable" [json_string name ; json_size size]
   | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
 
-let json_stmt s =
+let json_stmt (num, idx, res) s =
   let wrap_stmt st args = wrap "Stmt" st args in
 
   match s with
   | Dba.IkAssign (lhs, expr, _) -> begin
-      match lhs with
+      let j = match lhs with
       | Dba.LhsVar (_, _, _)
       | Dba.LhsVarRestrict (_, _, _, _) ->
           wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
       | Dba.LhsStore (_, endian, e2) ->
           wrap_stmt "Store" [json_expr e2 ; json_endian endian ; json_expr expr]
+      in
+      (num, idx, j :: res)
     end
 
   | Dba.IkSJump (target, _) -> begin
@@ -189,15 +191,19 @@ let json_stmt s =
             let i_json, s_json = json_addr addr in
             wrap "Imm" "Integer" [i_json ; s_json] (* TODO *)
       in
-      wrap_stmt "End" [wrap "Expr" "Num" [num]]
+      let j = wrap_stmt "End" [wrap "Expr" "Num" [num]] in
+      (num, idx, j :: res)
     end
 
   | Dba.IkDJump (expr, _) ->
-      wrap_stmt "End" [json_expr expr]
+      let j = wrap_stmt "End" [json_expr expr] in
+      (num, idx, j :: res)
 
-  | Dba.IkIf (_, _, _) -> wrap_stmt "TODO IkIf" []
+  | Dba.IkIf (cond, target, _) -> (num, idx, (wrap_stmt "TODO IkIf" []) :: res)
+    (* let l_s = sprintf "Label%d" id in *)
+    (* let l_json = wrap_stmt "Label" [json_string l_s] in *)
 
-  | Dba.IkStop (_) -> wrap_stmt "TODO IkStop" []
+  | Dba.IkStop (_) -> (num, idx, (wrap_stmt "TODO IkStop" []) :: res)
 
   | Dba.IkAssert (_, _) -> raise (Unhandled "IkAssert")
   | Dba.IkAssume (_, _) -> raise (Unhandled "IkAssume")
@@ -211,14 +217,15 @@ let json_stmt s =
 let json_ast addr len dba =
   let imm = wrap "Imm" "Integer" [`Int (addr + len) ; `Int 32] in
   let num = wrap "Expr" "Num" [imm] in
-  let stmts = Dba_types.Block.fold_left (fun l i -> (json_stmt i) :: l) [] dba in
-  let rev_ast =
-    match stmts with
+  let _, _, rev_stmts = Block.fold_left json_stmt (num, 0, []) dba in
+  (* let _, _, rev_stmts = json_stmt (num, 0, []) (Block.get dba 0) in *)
+  let rev_stmts' =
+    match rev_stmts with
     | [] -> [wrap "Stmt" "End" [num]]
-    | (`Assoc [("Type", `String "Stmt") ; ("SubType", `String "End") ; _]) :: _ -> stmts
-    | _ :: _ -> (wrap "Stmt" "End" [num]) :: stmts
+    | (`Assoc [("Type", `String "Stmt") ; ("SubType", `String "End") ; _]) :: _ -> rev_stmts
+    | _ :: _ -> (wrap "Stmt" "End" [num]) :: rev_stmts
   in
-  wrap "AST" "Stmts" (List.rev rev_ast)
+  wrap "AST" "Stmts" (List.rev rev_stmts')
 
 
 (* main *)
