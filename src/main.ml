@@ -144,9 +144,9 @@ and json_cond cond =
       let op_s, op_json = json_binop Dba.Or in
       wrap "Expr" op_s [op_json ; json_cond c1 ; json_cond c2]
   | Dba.True ->
-      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 1 ; json_size 1]] (* TODO *)
+      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 1 ; json_size 1]] (* TODO true = 1? *)
   | Dba.False ->
-      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 0 ; json_size 1]] (* TODO *)
+      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 0 ; json_size 1]] (* TODO false = 0? *)
 
 (* let json_compare compare = *)
 (*   match compare with *)
@@ -196,14 +196,16 @@ let json_stmt s =
       wrap_stmt "End" [json_expr expr]
 
   | Dba.IkIf (_, _, _) -> wrap_stmt "TODO IkIf" []
+
   | Dba.IkStop (_) -> wrap_stmt "TODO IkStop" []
-  | Dba.IkAssert (_, _) -> wrap_stmt "TODO IkAssert" []
-  | Dba.IkAssume (_, _) -> wrap_stmt "TODO IkAssume" []
-  | Dba.IkNondetAssume (_, _, _) -> wrap_stmt "TODO IkNondetAssume" []
-  | Dba.IkNondet (_, _, _) -> wrap_stmt "TODO IkNondet" []
-  | Dba.IkUndef (_, _) -> wrap_stmt "TODO IkUndef" []
-  | Dba.IkMalloc (_, _, _) -> wrap_stmt "TODO IkMalloc" []
-  | Dba.IkFree (_, _) -> wrap_stmt "TODO IkFree" []
+
+  | Dba.IkAssert (_, _) -> raise (Unhandled "IkAssert")
+  | Dba.IkAssume (_, _) -> raise (Unhandled "IkAssume")
+  | Dba.IkNondetAssume (_, _, _) -> raise (Unhandled "IkNondetAssume")
+  | Dba.IkNondet (_, _, _) -> raise (Unhandled "IkNondet")
+  | Dba.IkUndef (_, _) -> raise (Unhandled "IkUndef")
+  | Dba.IkMalloc (_, _, _) -> raise (Unhandled "IkMalloc")
+  | Dba.IkFree (_, _) -> raise (Unhandled "IkFree")
   | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
 
 let json_ast addr len dba =
