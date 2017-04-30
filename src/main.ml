@@ -1,3 +1,4 @@
+open Format
 open Dba
 open Dba_types
 
@@ -202,9 +203,15 @@ let json_stmt (num, idx, res) s =
       let j = wrap_stmt "End" [json_expr expr] in
       (num, idx, j :: res)
 
-  | Dba.IkIf (cond, target, _) -> (num, idx, (wrap_stmt "TODO IkIf" []) :: res)
-    (* let l_s = sprintf "Label%d" id in *)
-    (* let l_json = wrap_stmt "Label" [json_string l_s] in *)
+  | Dba.IkIf (cond, target, _) ->
+      let c = json_cond cond in
+      let s1 = json_string (sprintf "Label%d" idx) in
+      let s2 = json_string (sprintf "Label%d" (idx + 1)) in
+      let lab1 = wrap_stmt "Label" [s1] in
+      let lab2 = wrap_stmt "Label" [s2] in
+      let swt = wrap_stmt "CJump" [c ; s1 ; s2] in
+      let jmp = wrap_stmt "End" [json_target target] in
+      (num, idx, lab2 :: jmp :: lab1 :: swt :: res)
 
   | Dba.IkStop (_) -> (num, idx, (wrap_stmt "TODO IkStop" []) :: res)
 
@@ -241,14 +248,14 @@ let _ =
 
   (* print dba *)
   Logger.debug "\n\n%s\n==================================================================" opc;
-  Dba_types.Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i;) dba;
+  Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i) dba;
   Logger.debug "\n\n";
 
   (* variables *)
   let addr = 0x8048000 in
-  let len = (Dba_types.Block.length dba) * 32 in
+  let len = (Block.length dba) * 32 in
 
-  (* debug *)
+  (* debug ExprAlternative *)
   (* let foo = Dba.ExprAlternative ([ *)
   (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) ; *)
   (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) ; *)
@@ -256,6 +263,10 @@ let _ =
   (*   ], None) in *)
   (* let foo = Dba.ExprAlternative ([(Dba.ExprVar ("foo", 1, None))], None) in *)
   (* let json = json_expr foo in *)
+
+  (* debug IkIf *)
+  (* let foo = Dba.IkIf ((Dba.True), (Dba.JInner (42)), 7) in *)
+  (* let json = json_ast addr len (Block.of_list [foo ; (Dba.IkStop (None))]) in *)
 
   (* translate into json *)
   let json = json_ast addr len dba in
