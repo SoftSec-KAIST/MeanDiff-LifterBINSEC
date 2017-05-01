@@ -28,6 +28,7 @@ let json_int i = `Int i
 let json_size = json_int        (* TODO *)
   (* `Int (Basic_types.BitSize.to_int size) *)
 
+(* TODO: all instructions is max 8 bytes as numbers *)
 let json_addr a =
   `Int (Bigint.int_of_big_int (Bitvector.value_of a.base)), (* TODO big to int *)
   json_size (Bitvector.size_of a.base)
@@ -47,7 +48,7 @@ let json_binop op =
   | Dba.Plus -> wrap_bin "ADD"
   | Dba.Minus -> wrap_bin "SUB"
   | Dba.MultU -> wrap_bin "MUL"
-  | Dba.MultS -> raise (Unhandled "MultS") (* TODO *)
+  | Dba.MultS -> wrap_bin "MUL" (* TODO: coming new op *)
   | Dba.DivU -> wrap_bin "DIV"
   | Dba.DivS -> wrap_bin "SDIV"
   | Dba.ModU -> wrap_bin "MOD"
@@ -76,13 +77,13 @@ let rec json_expr expr =
   let wrap_expr st args = wrap "Expr" st args in
 
   match expr with
-  | Dba.ExprVar (name, size, _) ->
+  | Dba.ExprVar (name, size, _) -> (* TODO: vartag exception *)
       wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
 
   | Dba.ExprLoad (size, endian, e) ->
       wrap_expr "Load" [json_expr e ; json_endian endian ; json_size size]
 
-  | Dba.ExprCst (_, _) -> wrap_expr "TODO ExprCst" []
+  | Dba.ExprCst (_, _) -> wrap_expr "TODO ExprCst" [] (* TODO as IMM *)
 
   | Dba.ExprUnary (op, e) -> begin
       let op_s, op_json = json_unop op in
@@ -122,15 +123,15 @@ let rec json_expr expr =
   | Dba.ExprIte (c, e1, e2) ->
       wrap_expr "Ite" [json_cond c ; json_expr e1 ; json_expr e2]
 
-  | Dba.ExprAlternative (exprs, _) -> (* TODO handle AddCarry and AddZero *)
-    let op_s, op_json = json_binop Dba.Concat in
-    let rec fold exprs =
-      match exprs with
-      | [] -> raise (Unhandled "empty ExprAlternative")
-      | [e] -> json_expr e
-      | e :: es -> wrap_expr op_s ([op_json ; json_expr e] @ [fold es])
-    in
-    fold exprs
+  | Dba.ExprAlternative (_, _) -> raise (Unhandled "ExprAlternative")
+    (* let op_s, op_json = json_binop Dba.Concat in *)
+    (* let rec fold exprs = *)
+    (*   match exprs with *)
+    (*   | [] -> raise (Unhandled "empty ExprAlternative") *)
+    (*   | [e] -> json_expr e *)
+    (*   | e :: es -> wrap_expr op_s ([op_json ; json_expr e] @ [fold es]) *)
+    (* in *)
+    (* fold exprs *)
 
 and json_cond cond =
   match cond with
@@ -196,7 +197,7 @@ let json_stmt (num, idx, res) s =
 
   | Dba.IkSJump (target, _) ->
       let e = json_target target in
-      let j = wrap_stmt "End" [e] in
+      let j = wrap_stmt "End" [e] in (* TODO: make with CJump *)
       (num, idx, j :: res)
 
   | Dba.IkDJump (expr, _) ->
@@ -210,8 +211,8 @@ let json_stmt (num, idx, res) s =
       let lab1 = wrap_stmt "Label" [s1] in
       let lab2 = wrap_stmt "Label" [s2] in
       let swt = wrap_stmt "CJump" [c ; s1 ; s2] in
-      let jmp = wrap_stmt "End" [json_target target] in
-      (num, idx, lab2 :: jmp :: lab1 :: swt :: res)
+      let jmp = wrap_stmt "End" [json_target target] in (* TODO: cjump *)
+      (num, idx + 2, lab2 :: jmp :: lab1 :: swt :: res)
 
   | Dba.IkStop (_) ->
       (num, idx, (wrap_stmt "End" [num]) :: res)
@@ -220,7 +221,11 @@ let json_stmt (num, idx, res) s =
   | Dba.IkAssume (_, _) -> raise (Unhandled "IkAssume")
   | Dba.IkNondetAssume (_, _, _) -> raise (Unhandled "IkNondetAssume")
   | Dba.IkNondet (_, _, _) -> raise (Unhandled "IkNondet")
-  | Dba.IkUndef (_, _) -> raise (Unhandled "IkUndef")
+
+  | Dba.IkUndef (lhs, _) ->
+      let j = wrap_stmt "Move" [json_lhs lhs ; wrap "Expr" "NotExpr" []] in
+      (num, idx, j :: res)
+
   | Dba.IkMalloc (_, _, _) -> raise (Unhandled "IkMalloc")
   | Dba.IkFree (_, _) -> raise (Unhandled "IkFree")
   | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
