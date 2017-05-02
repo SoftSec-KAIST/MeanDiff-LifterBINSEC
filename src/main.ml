@@ -191,7 +191,7 @@ let json_stmt (num, idx, res) s =
 
   | Dba.IkSJump (target, _) ->
       let e = json_target target in
-      let j = wrap_stmt "End" [e] in (* TODO: make with CJump *)
+      let j = wrap_stmt "End" [e] in
       (num, idx, j :: res)
 
   | Dba.IkDJump (expr, _) ->
@@ -205,7 +205,7 @@ let json_stmt (num, idx, res) s =
       let lab1 = wrap_stmt "Label" [s1] in
       let lab2 = wrap_stmt "Label" [s2] in
       let swt = wrap_stmt "CJump" [c ; s1 ; s2] in
-      let jmp = wrap_stmt "End" [json_target target] in (* TODO: cjump *)
+      let jmp = wrap_stmt "End" [json_target target] in
       (num, idx + 2, lab2 :: jmp :: lab1 :: swt :: res)
 
   | Dba.IkStop (_) ->
