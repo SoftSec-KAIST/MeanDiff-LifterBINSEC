@@ -12,7 +12,7 @@ SRCDIR = src
 all: build
 
 build:
-	$(OCAML) $(OCAMLFLAGS) -I $(SRCDIR) -build-dir $(BUILDDIR) main.byte
+	$(OCAML) $(OCAMLFLAGS) -I $(SRCDIR) -r -build-dir $(BUILDDIR) main.byte
 	cp $(BUILDDIR)/$(SRCDIR)/main.byte $(BUILDDIR)/$(TARGET)
 
 clean:
