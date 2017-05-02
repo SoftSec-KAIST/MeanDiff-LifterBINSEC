@@ -4,11 +4,11 @@
    - [[#2-ocaml-libraries][2. Ocaml libraries]]
    - [[#3-install-binsec][3. Install BINSEC]]
  - [[#usage-of-binsec][Usage of BINSEC]]
- - [[#installation-of-bincoa-trans][Installation of `bincoa-trans`]]
+ - [[#installation-of-bincoa-trans][Installation of `bincoa`]]
    - [[#1-system-dependencies][1. System dependencies]]
    - [[#2-ocaml-libraries][2. Ocaml libraries]]
-   - [[#3-install-bincoa-trans][3. Install `bincoa-trans`]]
- - [[#usage-of-bincoa-trans][Usage of `bincoa-trans`]]
+   - [[#3-install-bincoa-trans][3. Install `bincoa`]]
+ - [[#usage-of-bincoa-trans][Usage of `bincoa`]]
  - [[#references][References]]
 
 ** Installation of BINSEC
@@ -53,13 +53,13 @@
 
    For more information see `binsec disasm -help` or `binsec-0.1-*/README`.
  
-** Installation of `bincoa-trans`
+** Installation of `bincoa`
    Dependencies are a subset of that of BINSEC, shown above, plus `yojson` from `opam`.
 
    Steps:
     1. Install system dependencies
     2. Install Ocaml libraries
-    3. Install `bincoa-trans`
+    3. Install `bincoa`
 
 *** 1. System dependencies
     - `ocaml`
@@ -71,15 +71,15 @@
     - `zmq`
     - `yojson`
 
-*** 3. Install `bincoa-trans`
-    Simply run `make` and find the binary in `build/bincoa-trans`.
+*** 3. Install `bincoa`
+    Simply run `make` and find the binary in `build/bincoa`.
 
-** Usage of `bincoa-trans`
+** Usage of `bincoa`
    There is only one argument needed, which is the opcode, in hex.
 
    BINSEC only supports 32-bit!
 
-   To decode opcode `0x0000` (`add [eax],al`), run `build/bincoa-trans 0000`.
+   To decode opcode `0x0000` (`add [eax],al`), run `build/bincoa 0000`.
  
 ** References
    - [[BINCOA Project][http://bincoa.labri.fr/]]
