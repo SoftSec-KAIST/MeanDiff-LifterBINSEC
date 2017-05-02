@@ -49,7 +49,9 @@
            $ cd src; make install
  
 ** Usage of BINSEC
-   See `binsec disasm -help` or `binsec-0.1-*/README` for examples.
+   To decode single instruction, run `binsec disasm -decode 0000`.
+
+   For more information see `binsec disasm -help` or `binsec-0.1-*/README`.
  
 ** Installation of `bincoa-trans`
    Dependencies are a subset of that of BINSEC, shown above, plus `yojson` from `opam`.
