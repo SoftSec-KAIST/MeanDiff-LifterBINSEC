@@ -86,7 +86,10 @@ let rec json_expr expr =
   | Dba.ExprLoad (size, endian, e) ->
       wrap_expr "Load" [json_expr e ; json_endian endian ; json_size size]
 
-  | Dba.ExprCst (_, _) -> wrap_expr "TODO ExprCst" [] (* TODO as IMM *)
+  | Dba.ExprCst (_, vector) ->
+      let value = Bigint.int_of_big_int (Bitvector.value_of vector) in
+      let size = Bitvector.size_of vector in
+      wrap_expr "Num" [wrap "Imm" "Integer" [json_int value ; json_size size]]
 
   | Dba.ExprUnary (op, e) -> begin
       let op_s, op_json = json_unop op in
