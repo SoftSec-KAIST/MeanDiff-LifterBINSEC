@@ -55,6 +55,6 @@
    TODO
  
 ** References
-   - [BINCOA Project](http://bincoa.labri.fr/)
-   - [BINSEC](http://binsec.gforge.inria.fr/tools)
-   - [BINSEC Documentation](http://binsec.gforge.inria.fr/apiref/index.html)
+   - [[BINCOA Project][http://bincoa.labri.fr/]]
+   - [[BINSEC][http://binsec.gforge.inria.fr/tools]]
+   - [[BINSEC Documentation][http://binsec.gforge.inria.fr/apiref/index.html]]
