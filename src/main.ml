@@ -77,8 +77,11 @@ let rec json_expr expr =
   let wrap_expr st args = wrap "Expr" st args in
 
   match expr with
-  | Dba.ExprVar (name, size, _) -> (* TODO: vartag exception *)
-      wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
+  | Dba.ExprVar (name, size, tag) -> begin
+      match tag with
+      (* | Some _ -> raise (Unhandled "vartag") *) (* TODO: unhandled vartag *)
+      | _ -> wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
+    end
 
   | Dba.ExprLoad (size, endian, e) ->
       wrap_expr "Load" [json_expr e ; json_endian endian ; json_size size]
@@ -166,17 +169,17 @@ let json_lhs lhs =
   match lhs with
   | Dba.LhsVar (name, size, _) ->
       wrap "Reg" "Variable" [json_string name ; json_size (size * 8)]
-  | Dba.LhsVarRestrict (name, size, _, _) -> (* TODO *)
+  | Dba.LhsVarRestrict (name, size, _, _) ->
       wrap "Reg" "Variable" [json_string name ; json_size size]
   | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
 
 let json_target target =
   let num = match target with
     | Dba.JInner (id) ->
-      wrap "Imm" "Integer" [json_int id ; json_int 8] (* TODO *)
+      wrap "Imm" "Integer" [json_int id ; json_int 8]
     | Dba.JOuter (addr) ->
       let i_json, s_json = json_addr addr in
-      wrap "Imm" "Integer" [i_json ; s_json] (* TODO *)
+      wrap "Imm" "Integer" [i_json ; s_json]
   in
   wrap "Expr" "Num" [num]
 
