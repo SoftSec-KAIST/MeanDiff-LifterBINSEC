@@ -152,21 +152,9 @@ and json_cond cond =
       let op_s, op_json = json_binop Dba.Or in
       wrap "Expr" op_s [op_json ; json_cond c1 ; json_cond c2]
   | Dba.True ->
-      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 1 ; json_size 1]] (* TODO true = 1? *)
+      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 1 ; json_size 1]]
   | Dba.False ->
-      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 0 ; json_size 1]] (* TODO false = 0? *)
-
-(* let json_compare compare = *)
-(*   match compare with *)
-(*   | Dba.FlgCmp (_, _) -> wrap "Compare" "TODO FlgCmp" [] *)
-(*   | Dba.FlgSub (_, _) -> wrap "Compare" "TODO FlgSub" [] *)
-(*   | Dba.FlgTest (_, _) -> wrap "Compare" "TODO FlgTest" [] *)
-(*   | Dba.FlgUnspecified -> wrap "Compare" "TODO FlgUnspecified" [] *)
-
-(* let json_vartag vartag = *)
-(*   match vartag with *)
-(*   | Dba.Flag (_) -> wrap "Vartag" "TODO Flag" [] *)
-(*   | Dba.Temp -> wrap "Vartag" "TODO Temp" [] *)
+      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 0 ; json_size 1]]
 
 let json_lhs lhs =
   match lhs with
