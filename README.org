@@ -5,6 +5,9 @@
    - [[#3-install-binsec][3. Install BINSEC]]
  - [[#usage-of-binsec][Usage of BINSEC]]
  - [[#installation-of-bincoa-trans][Installation of `bincoa-trans`]]
+   - [[#1-system-dependencies][1. System dependencies]]
+   - [[#2-ocaml-libraries][2. Ocaml libraries]]
+   - [[#3-install-bincoa-trans][3. Install `bincoa-trans`]]
  - [[#usage-of-bincoa-trans][Usage of `bincoa-trans`]]
  - [[#references][References]]
 
