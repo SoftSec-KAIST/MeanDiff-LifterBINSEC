@@ -80,7 +80,8 @@ let rec json_expr expr =
   | Dba.ExprVar (name, size, tag) -> begin
       match tag with
       (* | Some _ -> raise (Unhandled "vartag") *) (* TODO: unhandled vartag *)
-      | _ -> wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
+      | _ ->
+        wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
     end
 
   | Dba.ExprLoad (size, endian, e) ->
@@ -159,7 +160,7 @@ and json_cond cond =
 let json_lhs lhs =
   match lhs with
   | Dba.LhsVar (name, size, _) ->
-      wrap "Reg" "Variable" [json_string name ; json_size (size * 8)]
+      wrap "Reg" "Variable" [json_string name ; json_size size]
   | Dba.LhsVarRestrict (name, size, _, _) ->
       wrap "Reg" "Variable" [json_string name ; json_size size]
   | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
