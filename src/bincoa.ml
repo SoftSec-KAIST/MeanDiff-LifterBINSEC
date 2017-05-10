@@ -84,7 +84,7 @@ let rec json_expr expr =
     end
 
   | Dba.ExprLoad (size, endian, e) ->
-      wrap_expr "Load" [json_expr e ; json_endian endian ; json_size size]
+      wrap_expr "Load" [json_expr e ; json_endian endian ; json_size (size * 8)]
 
   | Dba.ExprCst (_, vector) ->
       let value = Bigint.int_of_big_int (Bitvector.value_of vector) in
