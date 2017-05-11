@@ -251,7 +251,7 @@ let json_ast addr len dba =
 (* main *)
 let _ =
   (* comment out to hide debug output *)
-  Logger.set_log_level "debug";
+  (* Logger.set_log_level "debug"; *)
 
   (* lift instruction *)
   let opc, dba = Decode_utils.decode_hex_opcode Sys.argv.(1) in
