@@ -25,10 +25,9 @@ let json_string s = `String s
 
 let json_int i = `Int i
 
-let json_size = json_int        (* TODO *)
-  (* `Int (Basic_types.BitSize.to_int size) *)
+let json_size = json_int
 
-(* TODO: all instructions is max 8 bytes as numbers *)
+(* NOTE: all instructions is max 8 bytes as numbers *)
 let json_addr a =
   `Int (Bigint.int_of_big_int (Bitvector.value_of a.base)), (* TODO big to int *)
   json_size (Bitvector.size_of a.base)
@@ -85,6 +84,7 @@ let rec json_expr expr =
     end
 
   | Dba.ExprLoad (size, endian, e) ->
+      (* NOTE: size is in bytes *)
       wrap_expr "Load" [json_expr e ; json_endian endian ; json_size (size * 8)]
 
   | Dba.ExprCst (_, vector) ->
