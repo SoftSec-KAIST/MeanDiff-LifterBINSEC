@@ -8,6 +8,19 @@ exception Unhandled of string
 
 
 (* utils *)
+let parse_args =
+  let len = Array.length Sys.argv in
+  match len with
+  | x when x < 2 -> Logger.fatal "no opcode given"; exit(1)
+  | x when x > 3 -> Logger.fatal "too many arguments given"; exit(1)
+  | 2 -> Sys.argv.(1)
+  | _ -> begin
+      match Sys.argv.(1) with
+      | "-v" | "--verbose" | "-d" | "--debug" -> Logger.set_log_level "debug"
+      | x -> Logger.fatal "unknown option"; exit(1)
+    end;
+    Sys.argv.(2)
+
 let wrap t st args = `Assoc [
     ("Type", `String t) ;
     ("SubType", `String st) ;
@@ -250,14 +263,17 @@ let json_ast addr len dba =
 
 (* main *)
 let _ =
-  (* comment out to hide debug output *)
+  (* NOTE: looking for debug output? pass -v or --verbose as arg *)
   (* Logger.set_log_level "debug"; *)
 
+  (* get command line args *)
+  let opc = parse_args in
+
   (* lift instruction *)
-  let opc, dba = Decode_utils.decode_hex_opcode Sys.argv.(1) in
+  let memonic, dba = Decode_utils.decode_hex_opcode opc in
 
   (* print dba *)
-  Logger.debug "\n\n%s\n==================================================================" opc;
+  Logger.debug "\n\n%s\n==================================================================" memonic;
   Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i) dba;
   Logger.debug "\n\n";
 
