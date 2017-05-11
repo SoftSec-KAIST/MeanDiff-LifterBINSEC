@@ -195,7 +195,7 @@ let unrestrict lhs expr name size lo hi =
                              expr) in
   lhs, expr
 
-let json_stmt (num, idx, res) s =
+let json_stmt (ends, idx, res) s =
   let wrap_stmt st args = wrap "Stmt" st args in
 
   match s with
@@ -209,17 +209,17 @@ let json_stmt (num, idx, res) s =
       | Dba.LhsStore (_, endian, e2) ->
           wrap_stmt "Store" [json_expr e2 ; json_endian endian ; json_expr expr]
       in
-      (num, idx, j :: res)
+      (ends, idx, j :: res)
     end
 
   | Dba.IkSJump (target, _) ->
       let e = json_target target in
       let j = wrap_stmt "End" [e] in
-      (num, idx, j :: res)
+      (ends, idx, j :: res)
 
   | Dba.IkDJump (expr, _) ->
       let j = wrap_stmt "End" [json_expr expr] in
-      (num, idx, j :: res)
+      (ends, idx, j :: res)
 
   | Dba.IkIf (cond, target, _) ->
       let c = json_cond cond in
@@ -229,10 +229,10 @@ let json_stmt (num, idx, res) s =
       let lab2 = wrap_stmt "Label" [s2] in
       let swt = wrap_stmt "CJump" [c ; s1 ; s2] in
       let jmp = wrap_stmt "End" [json_target target] in
-      (num, idx + 2, lab2 :: jmp :: lab1 :: swt :: res)
+      (ends, idx + 2, lab2 :: jmp :: lab1 :: swt :: res)
 
   | Dba.IkStop (_) ->
-      (num, idx, (wrap_stmt "End" [num]) :: res)
+      (ends, idx, ends :: res)
 
   | Dba.IkAssert (_, _) -> raise (Unhandled "IkAssert")
   | Dba.IkAssume (_, _) -> raise (Unhandled "IkAssume")
@@ -241,24 +241,27 @@ let json_stmt (num, idx, res) s =
 
   | Dba.IkUndef (lhs, _) ->
       let j = wrap_stmt "Move" [json_lhs lhs ; wrap "Expr" "NotExpr" []] in
-      (num, idx, j :: res)
+      (ends, idx, j :: res)
 
   | Dba.IkMalloc (_, _, _) -> raise (Unhandled "IkMalloc")
   | Dba.IkFree (_, _) -> raise (Unhandled "IkFree")
   | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
 
 let json_ast addr len dba =
-  let imm = wrap "Imm" "Integer" [`Int (addr + len) ; `Int 32] in
-  let num = wrap "Expr" "Num" [imm] in
-  let _, _, rev_stmts = Block.fold_left json_stmt (num, 0, []) dba in
-  (* let _, _, rev_stmts = json_stmt (num, 0, []) (Block.get dba 0) in *)
-  let rev_stmts' =
-    match rev_stmts with
-    | [] -> [wrap "Stmt" "End" [num]]
-    | (`Assoc [("Type", `String "Stmt") ; ("SubType", `String "End") ; _]) :: _ -> rev_stmts
-    | _ :: _ -> (wrap "Stmt" "End" [num]) :: rev_stmts
-  in
-  wrap "AST" "Stmts" (List.rev rev_stmts')
+  let end_addr = addr + len in
+  let end_stmt = wrap "Stmt" "End" [
+      wrap "Expr" "Num" [
+        wrap "Num" "Integer" [json_int end_addr ; json_size 32]
+      ]
+    ] in
+  (* translate each stmt to json *)
+  let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
+  (* add last end stmt if not already there *)
+  let stmts = List.rev (if (List.nth rev_stmts 0) = end_stmt
+                        then rev_stmts
+                        else end_stmt :: rev_stmts) in
+  (* wrap stmts in ast *)
+  wrap "AST" "Stmts" stmts
 
 
 (* main *)
