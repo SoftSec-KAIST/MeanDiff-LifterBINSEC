@@ -276,7 +276,7 @@ let _ =
   let memonic, dba = Decode_utils.decode_hex_opcode opc in
 
   (* print dba *)
-  Logger.debug "\n\n%s\n==================================================================" memonic;
+  Logger.debug "\n\n%s\n=======================================" memonic;
   Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i) dba;
   Logger.debug "\n\n";
 
@@ -284,22 +284,9 @@ let _ =
   let addr = 0x8048000 in
   let len = (Block.length dba) * 32 in
 
-  (* debug ExprAlternative *)
-  (* let foo = Dba.ExprAlternative ([ *)
-  (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) ; *)
-  (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) ; *)
-  (*     (Dba.ExprUnary (Dba.Not, (Dba.ExprVar ("foo", 1, None)))) *)
-  (*   ], None) in *)
-  (* let foo = Dba.ExprAlternative ([(Dba.ExprVar ("foo", 1, None))], None) in *)
-  (* let json = json_expr foo in *)
-
-  (* debug IkIf *)
-  (* let foo = Dba.IkIf ((Dba.True), (Dba.JInner (42)), 7) in *)
-  (* let json = json_ast addr len (Block.of_list [foo ; (Dba.IkStop (None))]) in *)
-
   (* translate into json *)
   let json = json_ast addr len dba in
 
   (* print the list, line by line *)
-  Logger.debug "\n==================================================================";
+  Logger.debug "\n=======================================";
   print_endline (Yojson.Basic.pretty_to_string json)
