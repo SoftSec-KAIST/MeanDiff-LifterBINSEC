@@ -63,7 +63,7 @@ let json_binop op =
   | Dba.LeftRotate -> raise (Unhandled "LeftRotate")
   | Dba.RightRotate -> raise (Unhandled "RightRotate")
   | Dba.Eq -> wrap_rel "EQ"
-  | Dba.Diff -> raise (Unhandled "Diff")
+  | Dba.Diff -> wrap_rel "NEQ"
   | Dba.LeqU -> wrap_rel "LE"
   | Dba.LtU -> wrap_rel "LT"
   | Dba.GeqU -> raise (Unhandled "GeqU")
@@ -99,7 +99,6 @@ let rec json_expr expr =
 
   | Dba.ExprBinary (op, e1, e2) -> begin
       match op with
-      | Dba.Diff -> json_expr (Expr.binary Dba.Minus e1 e2) (* TODO with if-then-else *)
       | Dba.GtU -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LeqU e1 e2))
       | Dba.GeqU -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LtU e1 e2))
       | Dba.GtS -> json_expr (Expr.unary Dba.Not (Expr.binary Dba.LeqS e1 e2))
@@ -252,7 +251,7 @@ let json_ast addr len dba =
 (* main *)
 let _ =
   (* comment out to hide debug output *)
-  (* Logger.set_log_level "debug"; *)
+  Logger.set_log_level "debug";
 
   (* lift instruction *)
   let opc, dba = Decode_utils.decode_hex_opcode Sys.argv.(1) in
