@@ -175,14 +175,24 @@ let json_target target =
   in
   wrap "Expr" "Num" [num]
 
+let unrestrict lhs expr name size lo hi =
+  let lhs = Dba.LhsVar (name, size, None) in
+  let v = Dba.ExprVar (name, size, None) in
+  let expr = Dba.ExprBinary (Dba.Concat,
+                             Dba.ExprRestrict (v, hi + 1, size - 1),
+                             expr) in
+  lhs, expr
+
 let json_stmt (num, idx, res) s =
   let wrap_stmt st args = wrap "Stmt" st args in
 
   match s with
   | Dba.IkAssign (lhs, expr, _) -> begin
       let j = match lhs with
-      | Dba.LhsVar (_, _, _)
-      | Dba.LhsVarRestrict (_, _, _, _) ->
+      | Dba.LhsVar (_, _, _) ->
+          wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
+      | Dba.LhsVarRestrict (name, size, l, h) ->
+          let lhs, expr = unrestrict lhs expr name size l h in
           wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
       | Dba.LhsStore (_, endian, e2) ->
           wrap_stmt "Store" [json_expr e2 ; json_endian endian ; json_expr expr]
