@@ -4,10 +4,12 @@ open Dba_types
 
 
 (* exceptions *)
+
 exception Unhandled of string
 
 
 (* utils *)
+
 let parse_args =
   let len = Array.length Sys.argv in
   match len with
@@ -29,10 +31,11 @@ let wrap t st args = `Assoc [
 
 
 (* translators *)
+
 let json_endian endian =
   match endian with
-  | Dba.LittleEndian -> wrap "Endian" "LittleEndian" []
-  | Dba.BigEndian -> wrap "Endian" "BigEndian" []
+  | Dba.LittleEndian -> wrap "EndianT" "LE" []
+  | Dba.BigEndian -> wrap "EndianT" "BE" []
 
 let json_string s = `String s
 
@@ -46,17 +49,18 @@ let json_addr a =
   json_size (Bitvector.size_of a.base)
 
 let json_unop op =
-  let wrap t = "UnOp", (wrap "UnOpKind" t []) in
+  let wrap t = "UnOp", (wrap "UnOpT" t []) in
 
   match op with
   | Dba.UMinus -> wrap "NEG"
   | Dba.Not -> wrap "NOT"
 
 let json_binop op =
-  let wrap_bin t = "BinOp", (wrap "BinOpKind" t []) in
-  let wrap_rel t = "RelOp", (wrap "RelOpKind" t []) in
+  let wrap_bin t = "BinOp", (wrap "BinOpT" t []) in
+  let wrap_rel t = "RelOp", (wrap "RelOpT" t []) in
 
   match op with
+  (* binary *)
   | Dba.Plus -> wrap_bin "ADD"
   | Dba.Minus -> wrap_bin "SUB"
   | Dba.MultU -> wrap_bin "MUL"
@@ -74,6 +78,7 @@ let json_binop op =
   | Dba.RShiftS -> wrap_bin "SAR"
   | Dba.LeftRotate -> raise (Unhandled "LeftRotate")
   | Dba.RightRotate -> raise (Unhandled "RightRotate")
+  (* relational *)
   | Dba.Eq -> wrap_rel "EQ"
   | Dba.Diff -> wrap_rel "NEQ"
   | Dba.LeqU -> wrap_rel "LE"
@@ -92,18 +97,17 @@ let rec json_expr expr =
   | Dba.ExprVar (name, size, tag) -> begin
       match tag with
       (* | Some _ -> raise (Unhandled "vartag") *) (* TODO: unhandled vartag *)
-      | _ ->
-        wrap_expr "Var" [wrap "Reg" "Variable" [json_string name ; json_size size]]
+      | _ -> wrap_expr "Var" [json_string name ; json_size size]
     end
 
   | Dba.ExprLoad (size, endian, e) ->
       (* NOTE: size is in bytes *)
-      wrap_expr "Load" [json_expr e ; json_endian endian ; json_size (size * 8)]
+      wrap_expr "Load" [json_expr e ; json_size (size * 8)]
 
   | Dba.ExprCst (_, vector) ->
       let value = Bigint.int_of_big_int (Bitvector.value_of vector) in
       let size = Bitvector.size_of vector in
-      wrap_expr "Num" [wrap "Imm" "Integer" [json_int value ; json_size size]]
+      wrap_expr "Num" [json_int value ; json_size size]
 
   | Dba.ExprUnary (op, e) -> begin
       let op_s, op_json = json_unop op in
@@ -123,21 +127,21 @@ let rec json_expr expr =
 
   | Dba.ExprRestrict (expr, lo, hi) ->
       let c' = wrap_expr "Cast" [
-        (wrap "CastFrom" "Low" []) ;
+        (wrap "CastT" "LOW" []) ;
         json_int (hi + 1) ;
         json_expr expr
       ] in
       wrap_expr "Cast" [
-        (wrap "CastFrom" "High" []) ;
+        (wrap "CastT" "HIGH" []) ;
         json_int (hi - lo + 1) ;
         c'
       ]
 
   | Dba.ExprExtU (expr, size) ->
-      wrap_expr "Cast" [(wrap "CastFrom" "ZeroExt" []) ; json_size size ; json_expr expr]
+      wrap_expr "Cast" [(wrap "CastT" "ZERO" []) ; json_size size ; json_expr expr]
 
   | Dba.ExprExtS (expr, size) ->
-      wrap_expr "Cast" [(wrap "CastFrom" "SignExt" []) ; json_size size ; json_expr expr]
+      wrap_expr "Cast" [(wrap "CastT" "SIGN" []) ; json_size size ; json_expr expr]
 
   | Dba.ExprIte (c, e1, e2) ->
       wrap_expr "Ite" [json_cond c ; json_expr e1 ; json_expr e2]
@@ -165,27 +169,25 @@ and json_cond cond =
       let op_s, op_json = json_binop Dba.Or in
       wrap "Expr" op_s [op_json ; json_cond c1 ; json_cond c2]
   | Dba.True ->
-      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 1 ; json_size 1]]
+      wrap "Expr" "Num" [json_int 1 ; json_size 1]
   | Dba.False ->
-      wrap "Expr" "Num" [wrap "Imm" "Integer" [json_int 0 ; json_size 1]]
+      wrap "Expr" "Num" [json_int 0 ; json_size 1]
 
 let json_lhs lhs =
   match lhs with
   | Dba.LhsVar (name, size, _) ->
-      wrap "Reg" "Variable" [json_string name ; json_size size]
+      [json_string name ; json_size size]
   | Dba.LhsVarRestrict (name, size, _, _) ->
-      wrap "Reg" "Variable" [json_string name ; json_size size]
+      [json_string name ; json_size size]
   | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
 
 let json_target target =
-  let num = match target with
+  match target with
     | Dba.JInner (id) ->
-      wrap "Imm" "Integer" [json_int id ; json_int 8]
+        wrap "Expr" "Num" [json_int id ; json_int 8]
     | Dba.JOuter (addr) ->
       let i_json, s_json = json_addr addr in
-      wrap "Imm" "Integer" [i_json ; s_json]
-  in
-  wrap "Expr" "Num" [num]
+        wrap "Expr" "Num" [i_json ; s_json]
 
 let unrestrict lhs expr name size lo hi =
   let lhs = Dba.LhsVar (name, size, None) in
@@ -202,12 +204,12 @@ let json_stmt (ends, idx, res) s =
   | Dba.IkAssign (lhs, expr, _) -> begin
       let j = match lhs with
       | Dba.LhsVar (_, _, _) ->
-          wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
+          wrap_stmt "Move" (json_lhs lhs @ [json_expr expr])
       | Dba.LhsVarRestrict (name, size, l, h) ->
           let lhs, expr = unrestrict lhs expr name size l h in
-          wrap_stmt "Move" [json_lhs lhs ; json_expr expr]
+          wrap_stmt "Move" (json_lhs lhs @ [json_expr expr])
       | Dba.LhsStore (_, endian, e2) ->
-          wrap_stmt "Store" [json_expr e2 ; json_endian endian ; json_expr expr]
+          wrap_stmt "Store" [json_expr e2 ; json_expr expr]
       in
       (ends, idx, j :: res)
     end
@@ -240,7 +242,7 @@ let json_stmt (ends, idx, res) s =
   | Dba.IkNondet (_, _, _) -> raise (Unhandled "IkNondet")
 
   | Dba.IkUndef (lhs, _) ->
-      let j = wrap_stmt "Move" [json_lhs lhs ; wrap "Expr" "NotExpr" []] in
+      let j = wrap_stmt "Move" (json_lhs lhs @ [wrap "Expr" "Undefined" []]) in
       (ends, idx, j :: res)
 
   | Dba.IkMalloc (_, _, _) -> raise (Unhandled "IkMalloc")
@@ -250,9 +252,7 @@ let json_stmt (ends, idx, res) s =
 let json_ast addr len dba =
   let end_addr = addr + len in
   let end_stmt = wrap "Stmt" "End" [
-      wrap "Expr" "Num" [
-        wrap "Num" "Integer" [json_int end_addr ; json_size 32]
-      ]
+      wrap "Expr" "Num" [json_int end_addr ; json_size 32]
     ] in
   (* translate each stmt to json *)
   let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
