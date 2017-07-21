@@ -286,15 +286,22 @@ let json_ast addr len dba =
   let end_stmt = wrap "Stmt" "End" [
       wrap "Expr" "Num" [json_int end_addr ; json_size 32]
     ] in
-  (* translate each stmt to json *)
-  let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
-  (* add last end stmt if not already there *)
-  let stmts = List.rev (if (List.nth rev_stmts 0) = end_stmt
-                        then rev_stmts
-                        else end_stmt :: rev_stmts) in
-  (* wrap stmts in ast *)
-  wrap "AST" "Stmts" stmts
 
+  try
+    (* translate each stmt to json *)
+    let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
+
+    (* add last end stmt if not already there *)
+    let rev_stmts' = if (List.nth rev_stmts 0) = end_stmt
+      then rev_stmts
+      else end_stmt :: rev_stmts in
+
+    (* wrap stmts in ast *)
+    wrap "AST" "Stmts" (List.rev rev_stmts')
+
+  with Unhandled s ->
+    Logger.warning "Unhandled %s" s;
+    wrap "AST" "Incapable" []
 
 (********)
 (* main *)
@@ -307,20 +314,26 @@ let _ =
   (* get command line args *)
   let opc = parse_args in
 
-  (* lift instruction *)
-  let mnemonic, dba = Decode_utils.decode_hex_opcode opc in
-
-  (* print dba *)
-  Logger.debug "\n\n%s\n=======================================" mnemonic;
-  Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i) dba;
-  Logger.debug "\n\n";
-
-  (* variables *)
-  let addr = 0x8048000 in
-  let len = (Block.length dba) * 32 in
-
   (* translate into json *)
-  let json = json_ast addr len dba in
+  let json =
+    try
+      (* lift instruction *)
+      let mnemonic, dba = Decode_utils.decode_hex_opcode opc in
+
+      (* print dba *)
+      Logger.debug "\n\n%s\n=======================================" mnemonic;
+      Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i) dba;
+      Logger.debug "\n\n";
+
+      (* variables *)
+      let addr = 0x8048000 in
+      let len = (Block.length dba) * 32 in
+
+      json_ast addr len dba
+
+    with _ ->
+      wrap "AST" "Uninterpretable" []
+  in
 
   (* print the list, line by line *)
   Logger.debug "\n=======================================";
