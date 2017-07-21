@@ -59,6 +59,9 @@ let json_addr a =
   `Int (Bigint.int_of_big_int (Bitvector.value_of a.base)), (* TODO big to int *)
   json_size (Bitvector.size_of a.base)
 
+
+(* endianness *)
+
 let json_endian endian =
   match endian with
   | Dba.LittleEndian -> wrap "EndianT" "LE" []
@@ -282,9 +285,10 @@ let json_stmt (ends, idx, res) s =
 (* abstract syntax tree *)
 
 let json_ast addr len dba =
-  let end_addr = addr + len in
+  let start_stmt = wrap "Stmt" "Start"
+      [json_int addr ; json_size 32 ; (json_endian Dba.BigEndian)] in
   let end_stmt = wrap "Stmt" "End" [
-      wrap "Expr" "Num" [json_int end_addr ; json_size 32]
+      wrap "Expr" "Num" [json_int (addr + len) ; json_size 32]
     ] in
 
   try
@@ -296,12 +300,16 @@ let json_ast addr len dba =
       then rev_stmts
       else end_stmt :: rev_stmts in
 
+    (* add start stmt *)
+    let stmts = start_stmt :: (List.rev rev_stmts') in
+
     (* wrap stmts in ast *)
-    wrap "AST" "Stmts" (List.rev rev_stmts')
+    wrap "AST" "Stmts" stmts
 
   with Unhandled s ->
     Logger.warning "Unhandled %s" s;
     wrap "AST" "Incapable" []
+
 
 (********)
 (* main *)
