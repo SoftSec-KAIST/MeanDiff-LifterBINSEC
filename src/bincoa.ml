@@ -3,12 +3,16 @@ open Dba
 open Dba_types
 
 
+(**************)
 (* exceptions *)
+(**************)
 
 exception Unhandled of string
 
 
+(*********)
 (* utils *)
+(*********)
 
 let parse_args =
   let len = Array.length Sys.argv in
@@ -29,13 +33,20 @@ let wrap t st args = `Assoc [
     ("Args", `List args)
   ]
 
+let unrestrict lhs expr name size lo hi =
+  let lhs = Dba.LhsVar (name, size, None) in
+  let v = Dba.ExprVar (name, size, None) in
+  let expr = Dba.ExprBinary (Dba.Concat,
+                             Dba.ExprRestrict (v, hi + 1, size - 1),
+                             expr) in
+  lhs, expr
 
+
+(***************)
 (* translators *)
+(***************)
 
-let json_endian endian =
-  match endian with
-  | Dba.LittleEndian -> wrap "EndianT" "LE" []
-  | Dba.BigEndian -> wrap "EndianT" "BE" []
+(* types *)
 
 let json_string s = `String s
 
@@ -48,12 +59,23 @@ let json_addr a =
   `Int (Bigint.int_of_big_int (Bitvector.value_of a.base)), (* TODO big to int *)
   json_size (Bitvector.size_of a.base)
 
+let json_endian endian =
+  match endian with
+  | Dba.LittleEndian -> wrap "EndianT" "LE" []
+  | Dba.BigEndian -> wrap "EndianT" "BE" []
+
+
+(* unary operators *)
+
 let json_unop op =
   let wrap t = "UnOp", (wrap "UnOpT" t []) in
 
   match op with
   | Dba.UMinus -> wrap "NEG"
   | Dba.Not -> wrap "NOT"
+
+
+(* binary operators *)
 
 let json_binop op =
   let wrap_bin t = "BinOp", (wrap "BinOpT" t []) in
@@ -89,6 +111,9 @@ let json_binop op =
   | Dba.LtS -> wrap_rel "SLT"
   | Dba.GeqS -> raise (Unhandled "GeqS")
   | Dba.GtS -> raise (Unhandled "GtS")
+
+
+(* expression *)
 
 let rec json_expr expr =
   let wrap_expr st args = wrap "Expr" st args in
@@ -156,6 +181,9 @@ let rec json_expr expr =
     (* in *)
     (* fold exprs *)
 
+
+(* condition *)
+
 and json_cond cond =
   match cond with
   | Dba.CondReif (e) -> json_expr e
@@ -173,6 +201,9 @@ and json_cond cond =
   | Dba.False ->
       wrap "Expr" "Num" [json_int 0 ; json_size 1]
 
+
+(* left-hand-side *)
+
 let json_lhs lhs =
   match lhs with
   | Dba.LhsVar (name, size, _) ->
@@ -180,6 +211,9 @@ let json_lhs lhs =
   | Dba.LhsVarRestrict (name, size, _, _) ->
       [json_string name ; json_size size]
   | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
+
+
+(* target *)
 
 let json_target target =
   match target with
@@ -189,13 +223,8 @@ let json_target target =
       let i_json, s_json = json_addr addr in
         wrap "Expr" "Num" [i_json ; s_json]
 
-let unrestrict lhs expr name size lo hi =
-  let lhs = Dba.LhsVar (name, size, None) in
-  let v = Dba.ExprVar (name, size, None) in
-  let expr = Dba.ExprBinary (Dba.Concat,
-                             Dba.ExprRestrict (v, hi + 1, size - 1),
-                             expr) in
-  lhs, expr
+
+(* statement *)
 
 let json_stmt (ends, idx, res) s =
   let wrap_stmt st args = wrap "Stmt" st args in
@@ -249,6 +278,9 @@ let json_stmt (ends, idx, res) s =
   | Dba.IkFree (_, _) -> raise (Unhandled "IkFree")
   | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
 
+
+(* abstract syntax tree *)
+
 let json_ast addr len dba =
   let end_addr = addr + len in
   let end_stmt = wrap "Stmt" "End" [
@@ -264,7 +296,10 @@ let json_ast addr len dba =
   wrap "AST" "Stmts" stmts
 
 
+(********)
 (* main *)
+(********)
+
 let _ =
   (* NOTE: looking for debug output? pass -v or --verbose as arg *)
   (* Logger.set_log_level "debug"; *)
