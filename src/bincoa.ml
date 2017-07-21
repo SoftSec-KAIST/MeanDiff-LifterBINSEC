@@ -308,10 +308,10 @@ let _ =
   let opc = parse_args in
 
   (* lift instruction *)
-  let memonic, dba = Decode_utils.decode_hex_opcode opc in
+  let mnemonic, dba = Decode_utils.decode_hex_opcode opc in
 
   (* print dba *)
-  Logger.debug "\n\n%s\n=======================================" memonic;
+  Logger.debug "\n\n%s\n=======================================" mnemonic;
   Block.iter (fun i -> Logger.debug "%a" Dba_printer.Ascii.pp_instruction i) dba;
   Logger.debug "\n\n";
 
