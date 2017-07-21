@@ -152,21 +152,21 @@ let rec json_expr expr =
 
   | Dba.ExprRestrict (expr, lo, hi) ->
       let c' = wrap_expr "Cast" [
-        (wrap "CastT" "LOW" []) ;
+        (wrap "CastOpT" "LOW" []) ;
         json_int (hi + 1) ;
         json_expr expr
       ] in
       wrap_expr "Cast" [
-        (wrap "CastT" "HIGH" []) ;
+        (wrap "CastOpT" "HIGH" []) ;
         json_int (hi - lo + 1) ;
         c'
       ]
 
   | Dba.ExprExtU (expr, size) ->
-      wrap_expr "Cast" [(wrap "CastT" "ZERO" []) ; json_size size ; json_expr expr]
+      wrap_expr "Cast" [(wrap "CastOpT" "ZERO" []) ; json_size size ; json_expr expr]
 
   | Dba.ExprExtS (expr, size) ->
-      wrap_expr "Cast" [(wrap "CastT" "SIGN" []) ; json_size size ; json_expr expr]
+      wrap_expr "Cast" [(wrap "CastOpT" "SIGN" []) ; json_size size ; json_expr expr]
 
   | Dba.ExprIte (c, e1, e2) ->
       wrap_expr "Ite" [json_cond c ; json_expr e1 ; json_expr e2]
