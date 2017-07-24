@@ -7,25 +7,13 @@ open Dba_types
 (* exceptions *)
 (**************)
 
-exception Unhandled of string
+exception UnhandledOp of string
+exception UnhandledArch of string
 
 
 (*********)
 (* utils *)
 (*********)
-
-let parse_args =
-  let len = Array.length Sys.argv in
-  match len with
-  | x when x < 2 -> Logger.fatal "no opcode given"; exit(1)
-  | x when x > 3 -> Logger.fatal "too many arguments given"; exit(1)
-  | 2 -> Sys.argv.(1)
-  | _ -> begin
-      match Sys.argv.(1) with
-      | "-v" | "--verbose" | "-d" | "--debug" -> Logger.set_log_level "debug"
-      | x -> Logger.fatal "unknown option"; exit(1)
-    end;
-    Sys.argv.(2)
 
 let wrap t st args = `Assoc [
     ("Type", `String t) ;
@@ -101,19 +89,19 @@ let json_binop op =
   | Dba.LShift -> wrap_bin "SHL"
   | Dba.RShiftU -> wrap_bin "SHR"
   | Dba.RShiftS -> wrap_bin "SAR"
-  | Dba.LeftRotate -> raise (Unhandled "LeftRotate")
-  | Dba.RightRotate -> raise (Unhandled "RightRotate")
+  | Dba.LeftRotate -> raise (UnhandledOp "LeftRotate")
+  | Dba.RightRotate -> raise (UnhandledOp "RightRotate")
   (* relational *)
   | Dba.Eq -> wrap_rel "EQ"
   | Dba.Diff -> wrap_rel "NEQ"
   | Dba.LeqU -> wrap_rel "LE"
   | Dba.LtU -> wrap_rel "LT"
-  | Dba.GeqU -> raise (Unhandled "GeqU")
-  | Dba.GtU -> raise (Unhandled "GtU")
+  | Dba.GeqU -> raise (UnhandledOp "GeqU")
+  | Dba.GtU -> raise (UnhandledOp "GtU")
   | Dba.LeqS -> wrap_rel "SLE"
   | Dba.LtS -> wrap_rel "SLT"
-  | Dba.GeqS -> raise (Unhandled "GeqS")
-  | Dba.GtS -> raise (Unhandled "GtS")
+  | Dba.GeqS -> raise (UnhandledOp "GeqS")
+  | Dba.GtS -> raise (UnhandledOp "GtS")
 
 
 (* expression *)
@@ -124,7 +112,7 @@ let rec json_expr expr =
   match expr with
   | Dba.ExprVar (name, size, tag) -> begin
       match tag with
-      (* | Some _ -> raise (Unhandled "vartag") *) (* TODO: unhandled vartag *)
+      (* | Some _ -> raise (UnhandledOp "vartag") *) (* TODO: unhandled vartag *)
       | _ -> wrap_expr "Var" [json_string name ; json_size size]
     end
 
@@ -174,11 +162,11 @@ let rec json_expr expr =
   | Dba.ExprIte (c, e1, e2) ->
       wrap_expr "Ite" [json_cond c ; json_expr e1 ; json_expr e2]
 
-  | Dba.ExprAlternative (_, _) -> raise (Unhandled "ExprAlternative")
+  | Dba.ExprAlternative (_, _) -> raise (UnhandledOp "ExprAlternative")
     (* let op_s, op_json = json_binop Dba.Concat in *)
     (* let rec fold exprs = *)
     (*   match exprs with *)
-    (*   | [] -> raise (Unhandled "empty ExprAlternative") *)
+    (*   | [] -> raise (UnhandledOp "empty ExprAlternative") *)
     (*   | [e] -> json_expr e *)
     (*   | e :: es -> wrap_expr op_s ([op_json ; json_expr e] @ [fold es]) *)
     (* in *)
@@ -213,7 +201,7 @@ let json_lhs lhs =
       [json_string name ; json_size size]
   | Dba.LhsVarRestrict (name, size, _, _) ->
       [json_string name ; json_size size]
-  | Dba.LhsStore (_, _, _) -> raise (Unhandled "LhsStore")
+  | Dba.LhsStore (_, _, _) -> raise (UnhandledOp "LhsStore")
 
 
 (* target *)
@@ -268,18 +256,18 @@ let json_stmt (ends, idx, res) s =
   | Dba.IkStop (_) ->
       (ends, idx, ends :: res)
 
-  | Dba.IkAssert (_, _) -> raise (Unhandled "IkAssert")
-  | Dba.IkAssume (_, _) -> raise (Unhandled "IkAssume")
-  | Dba.IkNondetAssume (_, _, _) -> raise (Unhandled "IkNondetAssume")
-  | Dba.IkNondet (_, _, _) -> raise (Unhandled "IkNondet")
+  | Dba.IkAssert (_, _) -> raise (UnhandledOp "IkAssert")
+  | Dba.IkAssume (_, _) -> raise (UnhandledOp "IkAssume")
+  | Dba.IkNondetAssume (_, _, _) -> raise (UnhandledOp "IkNondetAssume")
+  | Dba.IkNondet (_, _, _) -> raise (UnhandledOp "IkNondet")
 
   | Dba.IkUndef (lhs, _) ->
       let j = wrap_stmt "Move" (json_lhs lhs @ [wrap "Expr" "Undefined" []]) in
       (ends, idx, j :: res)
 
-  | Dba.IkMalloc (_, _, _) -> raise (Unhandled "IkMalloc")
-  | Dba.IkFree (_, _) -> raise (Unhandled "IkFree")
-  | Dba.IkPrint (_, _) -> raise (Unhandled "IkPrint")
+  | Dba.IkMalloc (_, _, _) -> raise (UnhandledOp "IkMalloc")
+  | Dba.IkFree (_, _) -> raise (UnhandledOp "IkFree")
+  | Dba.IkPrint (_, _) -> raise (UnhandledOp "IkPrint")
 
 
 (* abstract syntax tree *)
@@ -306,8 +294,8 @@ let json_ast addr len dba =
     (* wrap stmts in ast *)
     wrap "AST" "Stmts" stmts
 
-  with Unhandled s ->
-    Logger.warning "Unhandled %s" s;
+  with UnhandledOp op ->
+    Logger.warning "Unhandled %s" op;
     wrap "AST" "Incapable" []
 
 
@@ -315,16 +303,42 @@ let json_ast addr len dba =
 (* main *)
 (********)
 
-let _ =
-  (* NOTE: looking for debug output? pass -v or --verbose as arg *)
-  (* Logger.set_log_level "debug"; *)
+let usage = "usage: " ^ Sys.argv.(0) ^ " <arch> <opcode>"
 
-  (* get command line args *)
-  let opc = parse_args in
+let parse_args () =
+  let len = Array.length Sys.argv in
+
+  try
+    match len with
+    | x when x <> 3 -> raise (Arg.Bad "Wrong number of arguments given")
+    | _ ->
+      begin
+        let arch = match Sys.argv.(1) with
+          | "x86" -> "x86"
+          | "x64" | "x86-64" -> raise (UnhandledArch Sys.argv.(1))
+          | _ -> raise (Arg.Bad "Unknown architecture")
+        in
+        let opc = Sys.argv.(2) in
+
+        (arch, opc)
+      end
+
+  with Arg.Bad s ->
+    Logger.fatal "%s" s;
+    Printf.eprintf "%s" usage;
+    exit(1)
+
+
+let main =
+  (* uncomment to enable debug *)
+  (* Logger.set_log_level "debug"; *)
 
   (* translate into json *)
   let json =
     try
+      (* get command line args *)
+      let arch, opc = parse_args () in
+
       (* lift instruction *)
       let mnemonic, dba = Decode_utils.decode_hex_opcode opc in
 
@@ -337,12 +351,19 @@ let _ =
       let addr = 0x8048000 in
       let len = (Block.length dba) * 32 in
 
+      (* translate *)
       json_ast addr len dba
 
-    with _ ->
+    with
+    | UnhandledArch s ->
+      Logger.fatal "Unhandled architecture %s" s;
+      wrap "AST" "Incapable" []
+    | _ ->
       wrap "AST" "Uninterpretable" []
   in
 
   (* print the list, line by line *)
   Logger.debug "\n=======================================";
   print_endline (Yojson.Basic.pretty_to_string json)
+
+let () = main
