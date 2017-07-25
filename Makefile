@@ -1,7 +1,7 @@
 OCAML = ocamlbuild
 OCAMLFLAGS = -use-ocamlfind
 
-TARGET = bincoa
+TARGET = BINSEC
 
 BUILDDIR = build
 SRCDIR   = src
@@ -12,8 +12,8 @@ SRCDIR   = src
 all: build
 
 build:
-	$(OCAML) $(OCAMLFLAGS) -I $(SRCDIR) -r -build-dir $(BUILDDIR) $(TARGET).native
-	cp $(BUILDDIR)/$(SRCDIR)/$(TARGET).native $(BUILDDIR)/$(TARGET)
+	$(OCAML) $(OCAMLFLAGS) -I $(SRCDIR) -r -build-dir $(BUILDDIR) main.native
+	cp $(BUILDDIR)/$(SRCDIR)/main.native $(BUILDDIR)/$(TARGET)
 
 clean:
 	rm -rf $(BUILDDIR)
