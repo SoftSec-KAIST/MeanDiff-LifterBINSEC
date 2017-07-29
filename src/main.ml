@@ -138,10 +138,9 @@ let rec json_expr expr =
       let size = Bitvector.size_of vector in
       wrap_expr "Num" [json_int value ; json_size size]
 
-  | Dba.ExprUnary (op, e) -> begin
+  | Dba.ExprUnary (op, e) ->
       let op_s, op_json = json_unop op in
       wrap_expr op_s [op_json ; json_expr e]
-    end
 
   | Dba.ExprBinary (op, e1, e2) -> begin
       match op with
