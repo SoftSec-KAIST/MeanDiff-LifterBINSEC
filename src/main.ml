@@ -221,11 +221,11 @@ let json_lhs lhs =
 
 let json_target target =
   match target with
-    | Dba.JInner (id) ->
-        wrap "Expr" "Num" [json_int id ; json_int 8]
-    | Dba.JOuter (addr) ->
-      let i_json, s_json = json_addr addr in
-        wrap "Expr" "Num" [i_json ; s_json]
+  | Dba.JInner (id) ->
+      wrap "Expr" "Num" [json_int id ; json_int 8]
+  | Dba.JOuter (addr) ->
+    let i_json, s_json = json_addr addr in
+      wrap "Expr" "Num" [i_json ; s_json]
 
 
 (* statement *)
@@ -241,14 +241,15 @@ let json_stmt (ends, idx, res, num, label) s =
 
   match s with
   | Dba.IkAssign (lhs, expr, _) -> begin
-      let j = match lhs with
-      | Dba.LhsVar (_, _, _) ->
-          wrap_stmt "Move" (json_lhs lhs @ [json_expr expr])
-      | Dba.LhsVarRestrict (name, size, l, h) ->
-          let lhs, expr = unrestrict lhs expr name size l h in
-          wrap_stmt "Move" (json_lhs lhs @ [json_expr expr])
-      | Dba.LhsStore (_, endian, e2) ->
-          wrap_stmt "Store" [json_expr e2 ; json_expr expr]
+      let j =
+        match lhs with
+        | Dba.LhsVar (_, _, _) ->
+            wrap_stmt "Move" (json_lhs lhs @ [json_expr expr])
+        | Dba.LhsVarRestrict (name, size, l, h) ->
+            let lhs, expr = unrestrict lhs expr name size l h in
+            wrap_stmt "Move" (json_lhs lhs @ [json_expr expr])
+        | Dba.LhsStore (_, endian, e2) ->
+            wrap_stmt "Store" [json_expr e2 ; json_expr expr]
       in
       (ends, idx, j :: res, num + 1, label)
     end
