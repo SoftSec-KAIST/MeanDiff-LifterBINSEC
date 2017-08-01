@@ -10,6 +10,7 @@ open String
 
 exception UnhandledOp of string
 exception UnhandledArch of string
+exception UnhandledInsn of string
 
 
 (*********)
@@ -255,7 +256,7 @@ let json_stmt (ends, idx, res) s =
       (ends, idx + 2, lab2 :: jmp :: lab1 :: swt :: res)
 
   | Dba.IkStop (_) ->
-      (ends, idx, ends :: res)
+      raise (UnhandledInsn "IkStop")
 
   | Dba.IkAssert (_, _) -> raise (UnhandledOp "IkAssert")
   | Dba.IkAssume (_, _) -> raise (UnhandledOp "IkAssume")
@@ -280,24 +281,19 @@ let json_ast addr len dba =
       wrap "Expr" "Num" [json_int (addr + len) ; json_size 32]
     ] in
 
-  try
-    (* translate each stmt to json *)
-    let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
+  (* translate each stmt to json *)
+  let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
 
-    (* add last end stmt if not already there *)
-    let rev_stmts' = if (List.nth rev_stmts 0) = end_stmt
-      then rev_stmts
-      else end_stmt :: rev_stmts in
+  (* add last end stmt if not already there *)
+  let rev_stmts' = if (List.nth rev_stmts 0) = end_stmt
+    then rev_stmts
+    else end_stmt :: rev_stmts in
 
-    (* add start stmt *)
-    let stmts = start_stmt :: (List.rev rev_stmts') in
+  (* add start stmt *)
+  let stmts = start_stmt :: (List.rev rev_stmts') in
 
-    (* wrap stmts in ast *)
-    wrap "AST" "Stmts" stmts
-
-  with UnhandledOp op ->
-    Logger.warning "Unhandled %s" op;
-    wrap "AST" "Incapable" []
+  (* wrap stmts in ast *)
+  wrap "AST" "Stmts" stmts
 
 
 (********)
@@ -358,6 +354,9 @@ let main =
     with
     | UnhandledArch s ->
       Logger.fatal "Unhandled architecture %s" s;
+      wrap "AST" "Incapable" []
+    | UnhandledOp op ->
+      Logger.warning "Unhandled %s" op;
       wrap "AST" "Incapable" []
     | _ ->
       wrap "AST" "Uninterpretable" []
