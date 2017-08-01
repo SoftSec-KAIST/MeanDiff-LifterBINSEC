@@ -1,6 +1,7 @@
 open Format
 open Dba
 open Dba_types
+open String
 
 
 (**************)
@@ -36,7 +37,7 @@ let unrestrict lhs expr name size lo hi =
 
 (* types *)
 
-let json_string s = `String s
+let json_string s = `String (String.lowercase s)
 
 let json_int i = `Int i
 
@@ -76,19 +77,19 @@ let json_binop op =
   (* binary *)
   | Dba.Plus -> wrap_bin "ADD"
   | Dba.Minus -> wrap_bin "SUB"
-  | Dba.MultU -> wrap_bin "MUL"
-  | Dba.MultS -> wrap_bin "MUL" (* TODO: coming new op *)
-  | Dba.DivU -> wrap_bin "DIV"
+  | Dba.MultU -> wrap_bin "UMUL"
+  | Dba.MultS -> wrap_bin "SMUL"
+  | Dba.DivU -> wrap_bin "UDIV"
   | Dba.DivS -> wrap_bin "SDIV"
-  | Dba.ModU -> wrap_bin "MOD"
+  | Dba.ModU -> wrap_bin "UMOD"
   | Dba.ModS -> wrap_bin "SMOD"
   | Dba.Or -> wrap_bin "OR"
   | Dba.And -> wrap_bin "AND"
   | Dba.Xor -> wrap_bin "XOR"
   | Dba.Concat -> wrap_bin "CONCAT"
   | Dba.LShift -> wrap_bin "SHL"
-  | Dba.RShiftU -> wrap_bin "SHR"
-  | Dba.RShiftS -> wrap_bin "SAR"
+  | Dba.RShiftU -> wrap_bin "USHR"
+  | Dba.RShiftS -> wrap_bin "SSHR"
   | Dba.LeftRotate -> raise (UnhandledOp "LeftRotate")
   | Dba.RightRotate -> raise (UnhandledOp "RightRotate")
   (* relational *)
