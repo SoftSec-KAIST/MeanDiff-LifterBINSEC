@@ -276,7 +276,7 @@ let json_stmt (ends, idx, res) s =
 
 let json_ast addr len dba =
   let start_stmt = wrap "Stmt" "Start"
-      [json_int addr ; json_size 32 ; (json_endian Dba.BigEndian)] in
+      [json_int addr ; json_size 32 ; (json_endian Dba.LittleEndian)] in
   let end_stmt = wrap "Stmt" "End" [
       wrap "Expr" "Num" [json_int (addr + len) ; json_size 32]
     ] in
