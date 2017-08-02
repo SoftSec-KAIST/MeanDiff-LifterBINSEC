@@ -99,8 +99,8 @@ let json_binop op =
   (* relational *)
   | Dba.Eq -> wrap_rel "EQ"
   | Dba.Diff -> wrap_rel "NEQ"
-  | Dba.LeqU -> wrap_rel "LE"
-  | Dba.LtU -> wrap_rel "LT"
+  | Dba.LeqU -> wrap_rel "ULE"
+  | Dba.LtU -> wrap_rel "ULT"
   | Dba.GeqU -> raise (UnhandledOp "GeqU")
   | Dba.GtU -> raise (UnhandledOp "GtU")
   | Dba.LeqS -> wrap_rel "SLE"
