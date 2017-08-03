@@ -26,12 +26,20 @@ let wrap t st args = `Assoc [
 let unrestrict lhs expr name size lo hi =
   let lhs = Dba.LhsVar (name, size, None) in
   let v = Dba.ExprVar (name, size, None) in
-  let expr = Dba.ExprBinary (Dba.Concat,
-                             Dba.ExprRestrict (v, hi, size),
-                             expr) in
-  let expr = Dba.ExprBinary (Dba.Concat,
-                             expr,
-                             Dba.ExprRestrict (v, 0, lo)) in
+  let expr =
+    if hi + 1 < size - 1
+    then
+      Dba.ExprBinary (Dba.Concat, Dba.ExprRestrict (v, hi + 1, size - 1), expr)
+    else
+      expr
+    in
+  let expr =
+    if 0 < lo - 1
+    then
+      Dba.ExprBinary (Dba.Concat, expr, Dba.ExprRestrict (v, 0, lo - 1))
+    else
+      expr
+    in
   lhs, expr
 
 
@@ -149,12 +157,12 @@ let rec json_expr expr =
   | Dba.ExprRestrict (expr, lo, hi) ->
       let c' = wrap_expr "Cast" [
         (wrap "CastOpT" "LOW" []) ;
-        json_int hi ;
+        json_int (hi + 1) ;
         json_expr expr
       ] in
       wrap_expr "Cast" [
         (wrap "CastOpT" "HIGH" []) ;
-        json_int (hi - lo) ;
+        json_int (hi - lo + 1) ;
         c'
       ]
 
