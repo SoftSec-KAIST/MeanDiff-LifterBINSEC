@@ -230,8 +230,14 @@ let json_target target =
 
 (* statement *)
 
-let json_stmt (ends, idx, res) s =
+let json_stmt (ends, idx, res, num, label) s =
   let wrap_stmt st args = wrap "Stmt" st args in
+
+  let res, label =
+    match label with
+    | Some (n, j) -> if num = n then j :: res, None else res, label
+    | None -> res, label
+  in
 
   match s with
   | Dba.IkAssign (lhs, expr, _) -> begin
@@ -244,17 +250,17 @@ let json_stmt (ends, idx, res) s =
       | Dba.LhsStore (_, endian, e2) ->
           wrap_stmt "Store" [json_expr e2 ; json_expr expr]
       in
-      (ends, idx, j :: res)
+      (ends, idx, j :: res, num + 1, label)
     end
 
   | Dba.IkSJump (target, _) ->
       let e = json_target target in
       let j = wrap_stmt "End" [e] in
-      (ends, idx, j :: res)
+      (ends, idx, j :: res, num + 1, label)
 
   | Dba.IkDJump (expr, _) ->
       let j = wrap_stmt "End" [json_expr expr] in
-      (ends, idx, j :: res)
+      (ends, idx, j :: res, num + 1, label)
 
   | Dba.IkIf (cond, target, _) ->
       let c = json_cond cond in
@@ -263,8 +269,12 @@ let json_stmt (ends, idx, res) s =
       let lab1 = wrap_stmt "Label" [s1] in
       let lab2 = wrap_stmt "Label" [s2] in
       let swt = wrap_stmt "CJump" [c ; s1 ; s2] in
-      let jmp = wrap_stmt "End" [json_target target] in
-      (ends, idx + 2, lab2 :: jmp :: lab1 :: swt :: res)
+      let target =
+        match target with
+        | JInner (id) -> id
+        | _ -> raise (UnhandledInsn "IkIf")
+      in
+      (ends, idx + 2, lab2 :: swt :: res, num + 1, Some (target, lab1))
 
   | Dba.IkStop (_) ->
       raise (UnhandledInsn "IkStop")
@@ -276,7 +286,7 @@ let json_stmt (ends, idx, res) s =
 
   | Dba.IkUndef (lhs, _) ->
       let j = wrap_stmt "Move" (json_lhs lhs @ [wrap "Expr" "Undefined" []]) in
-      (ends, idx, j :: res)
+      (ends, idx, j :: res, num + 1, label)
 
   | Dba.IkMalloc (_, _, _) -> raise (UnhandledOp "IkMalloc")
   | Dba.IkFree (_, _) -> raise (UnhandledOp "IkFree")
@@ -293,7 +303,7 @@ let json_ast addr len dba =
     ] in
 
   (* translate each stmt to json *)
-  let _, _, rev_stmts = Block.fold_left json_stmt (end_stmt, 0, []) dba in
+  let _, _, rev_stmts, _, _ = Block.fold_left json_stmt (end_stmt, 0, [], 0, None) dba in
 
   (* add last end stmt if not already there *)
   let rev_stmts' = if (List.nth rev_stmts 0) = end_stmt
@@ -368,6 +378,8 @@ let main =
       wrap "AST" "Incapable" []
     | UnhandledOp op ->
       Logger.warning "Unhandled %s" op;
+      wrap "AST" "Incapable" []
+    | UnhandledInsn _ ->
       wrap "AST" "Incapable" []
     | _ ->
       wrap "AST" "Uninterpretable" []
