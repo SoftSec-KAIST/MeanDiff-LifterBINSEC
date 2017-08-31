@@ -331,7 +331,7 @@ let parse_args () =
     | x when x <> 3 -> raise (Arg.Bad "Wrong number of arguments given")
     | _ ->
       begin
-        let arch = match (String.lowercase_ascii Sys.argv.(1)) with
+        let arch = match (String.lowercase Sys.argv.(1)) with
           | "x86" -> "x86"
           | "x64" | "x86_64" -> raise (UnhandledArch Sys.argv.(1))
           | _ -> raise (Arg.Bad "Unknown architecture")
