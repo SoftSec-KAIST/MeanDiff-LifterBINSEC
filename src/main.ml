@@ -56,9 +56,9 @@ let json_int i = `Int i
 let json_size = json_int
 
 (* NOTE: all instructions is max 8 bytes as numbers *)
-let json_addr a =
-  `Int (Bigint.int_of_big_int (Bitvector.value_of a.base)), (* TODO big to int *)
-  json_size (Bitvector.size_of a.base)
+let json_addr base addr =
+  let i = (base + (Bigint.int_of_big_int (Bitvector.value_of addr.base))) in
+  json_int i, json_size (Bitvector.size_of addr.base)
 
 
 (* endianness *)
@@ -218,12 +218,12 @@ let json_lhs lhs =
 
 (* target *)
 
-let json_target base_addr target =
+let json_target target base_addr =
   match target with
   | Dba.JInner (id) ->
       wrap "Expr" "Num" [json_int id ; json_int 8]
   | Dba.JOuter (addr) ->
-    let i_json, s_json = json_addr addr in
+    let i_json, s_json = json_addr base_addr addr in
       wrap "Expr" "Num" [i_json ; s_json]
 
 
@@ -254,7 +254,7 @@ let json_stmt (addr, idx, res, num, label) s =
     end
 
   | Dba.IkSJump (target, _) ->
-      let e = json_target addr target in
+      let e = json_target target addr in
       let j = wrap_stmt "End" [e] in
       (addr, idx, j :: res, num + 1, label)
 
