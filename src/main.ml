@@ -350,7 +350,7 @@ let parse_args () =
 let main =
   Logger.set_log_level "fatal";
   (* uncomment to enable debug *)
-  Logger.set_log_level "debug";
+  (* Logger.set_log_level "debug"; *)
 
   (* translate into json *)
   let json =
