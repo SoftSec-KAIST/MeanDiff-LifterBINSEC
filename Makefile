@@ -6,15 +6,14 @@ TARGET = BINSEC
 BUILDDIR = build
 SRCDIR   = src
 
+.PHONY: all copy clean
 
-.PHONY: all build clean
-
-all: build
+all: copy
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
-build: $(BUILDDIR)
+copy: $(BUILDDIR)
 	$(OCAML) $(OCAMLFLAGS) -I $(SRCDIR) -r -build-dir $(BUILDDIR) main.native
 	cp $(BUILDDIR)/$(SRCDIR)/main.native $(BUILDDIR)/Lifter$(TARGET)
 
