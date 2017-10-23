@@ -1,5 +1,5 @@
 FROM build_base
-MAINTAINER Markus Faerevaag <soomink@kaist.ac.kr>
+MAINTAINER Soomin Kim <soomink@kaist.ac.kr>
 
 RUN apt install m4 debianutils -y
 
