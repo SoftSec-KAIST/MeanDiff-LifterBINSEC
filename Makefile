@@ -11,7 +11,10 @@ SRCDIR   = src
 
 all: build
 
-build:
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
+build: $(BUILDDIR)
 	$(OCAML) $(OCAMLFLAGS) -I $(SRCDIR) -r -build-dir $(BUILDDIR) main.native
 	cp $(BUILDDIR)/$(SRCDIR)/main.native $(BUILDDIR)/Lifter$(TARGET)
 
