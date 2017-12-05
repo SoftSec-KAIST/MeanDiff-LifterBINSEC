@@ -1,4 +1,4 @@
-* BINCOA Translator                                                :TOC_4_hg:
+* LifterBINSEC                                                :TOC_4_hg:
  - [[#installation-of-binsec][Installation of BINSEC]]
    - [[#1-system-dependencies][1. System dependencies]]
    - [[#2-ocaml-libraries][2. Ocaml libraries]]
